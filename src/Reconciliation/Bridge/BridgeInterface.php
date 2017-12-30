@@ -4,38 +4,38 @@ namespace FernleafSystems\Integrations\Freeagent\Reconciliation\Bridge;
 
 use FernleafSystems\ApiWrappers\Freeagent\Entities\Contacts\ContactVO;
 use FernleafSystems\ApiWrappers\Freeagent\Entities\Invoices\InvoiceVO;
-use Stripe\BalanceTransaction;
+use FernleafSystems\Integrations\Freeagent\DataWrapper\ChargeVO;
 
 interface BridgeInterface {
 
 	/**
-	 * @param BalanceTransaction $oBalTxn
-	 * @param bool               $bUpdateOnly
+	 * @param ChargeVO $oCharge
+	 * @param bool     $bUpdateOnly
 	 * @return ContactVO
 	 */
-	public function createFreeagentContact( $oBalTxn, $bUpdateOnly = false );
+	public function createFreeagentContact( $oCharge, $bUpdateOnly = false );
 
 	/**
-	 * @param string $sChargeTxnId
+	 * @param ChargeVO $oCharge
 	 * @return InvoiceVO
 	 */
-	public function createFreeagentInvoiceFromStripeBalanceTxn( $sChargeTxnId );
+	public function createFreeagentInvoice( $oCharge );
 
 	/**
-	 * @param BalanceTransaction $oBalTxn
+	 * @param ChargeVO $oCharge
 	 * @return int
 	 */
-	public function getFreeagentContactIdFromStripeBalTxn( $oBalTxn );
+	public function getFreeagentContactId( $oCharge );
 
 	/**
-	 * @param BalanceTransaction $oStripeTxn
+	 * @param ChargeVO $oCharge
 	 * @return int
 	 */
-	public function getFreeagentInvoiceIdFromStripeBalanceTxn( $oStripeTxn );
+	public function getFreeagentInvoiceId( $oCharge );
 
 	/**
-	 * @param BalanceTransaction $oStripeTxn
+	 * @param ChargeVO $oCharge
 	 * @return bool
 	 */
-	public function verifyStripeToInternalPaymentLink( $oStripeTxn );
+	public function verifyInternalPaymentLink( $oCharge );
 }

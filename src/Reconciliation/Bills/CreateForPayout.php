@@ -45,7 +45,7 @@ class CreateForPayout {
 		$oFaConfig = $this->getFreeagentConfigVO();
 		$oPayout = $this->getPayoutVO();
 
-		$nTotalFees = $oPayout->getTotalFees();
+		$nTotalFees = $oPayout->getTotalFee();
 
 		/** @var ContactVO $oStripeContact */
 		$oStripeContact = ( new Retrieve() )
@@ -58,9 +58,9 @@ class CreateForPayout {
 
 		$aComments = array(
 			sprintf( 'Bill for Stripe Payout: https://dashboard.stripe.com/payouts/%s', $oPayout->getId() ),
-			sprintf( 'Gross Amount: %s %s', $oPayout->getCurrency(), $oPayout->getAmount_Net() ),
+			sprintf( 'Gross Amount: %s %s', $oPayout->getCurrency(), $oPayout->getTotalGross() ),
 			sprintf( 'Fees Total: %s %s', $oPayout->getCurrency(), $nTotalFees ),
-			sprintf( 'Net Amount: %s %s', $oPayout->getCurrency(), round( $oPayout->getAmount_Net(), 2 ) )
+			sprintf( 'Net Amount: %s %s', $oPayout->getCurrency(), round( $oPayout->getTotalNet(), 2 ) )
 		);
 
 		$oBill = ( new Create() )

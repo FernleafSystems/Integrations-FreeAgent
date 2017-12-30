@@ -4,23 +4,19 @@ namespace FernleafSystems\Integrations\Freeagent\Reconciliation\Invoices;
 
 use FernleafSystems\ApiWrappers\Base\ConnectionConsumer;
 use FernleafSystems\ApiWrappers\Freeagent\Entities;
+use FernleafSystems\Integrations\Freeagent\Consumers\BridgeConsumer;
 use FernleafSystems\Integrations\Freeagent\Consumers\PayoutVoConsumer;
-use FernleafSystems\Integrations\Freeagent\Reconciliation\Bridge\BridgeInterface;
 
 class InvoicesVerify {
 
-	use ConnectionConsumer,
+	use BridgeConsumer,
+		ConnectionConsumer,
 		PayoutVoConsumer;
 
 	/**
 	 * @var Entities\Invoices\InvoiceVO[]
 	 */
 	private $aFreeagentInvoices;
-
-	/**
-	 * @var BridgeInterface
-	 */
-	private $oBridge;
 
 	/**
 	 * Will return a collection of all invoices to be reconciled, or null if there
@@ -31,6 +27,7 @@ class InvoicesVerify {
 	public function run() {
 
 		$oBridge = $this->getBridge();
+		$oPayout = $this->getPayoutVO();
 
 		$aFreeagentInvoicesPool = $this->getFreeagentInvoicesPool();
 
@@ -38,18 +35,18 @@ class InvoicesVerify {
 		// that is represented in the Payout.
 		$nTxnCount = 0;
 		$aInvoicesToReconcile = array();
-		foreach ( $this->getStripeBalanceTxns() as $oBalTxn ) {
+		foreach ( $oPayout->getCharges() as $oCharge ) {
 
 			$oInvoiceToReconcile = null;
 
 			// We first check that we can build the link reliably between this ($oBalTxn)
 			// Stripe Balance Transaction, and the internal Payment (which links us to Freeagent)
-			$bValidLink = $oBridge->verifyStripeToInternalPaymentLink( $oBalTxn );
+			$bValidLink = $oBridge->verifyInternalPaymentLink( $oCharge );
 			if ( !$bValidLink ) {
 				continue;
 			}
 
-			$nFreeagentInvoiceId = $oBridge->getFreeagentInvoiceIdFromStripeBalanceTxn( $oBalTxn );
+			$nFreeagentInvoiceId = $oBridge->getFreeagentContactId( $oCharge );
 			if ( !empty( $nFreeagentInvoiceId ) ) {
 				// Verify we've been able to load it.
 				foreach ( $aFreeagentInvoicesPool as $oInvoice ) {
@@ -61,7 +58,7 @@ class InvoicesVerify {
 			}
 
 			if ( is_null( $oInvoiceToReconcile ) ) { // No Invoice, so we create it.
-				$oNewInvoice = $oBridge->createFreeagentInvoiceFromStripeBalanceTxn( $oBalTxn->source );
+				$oNewInvoice = $oBridge->createFreeagentInvoice( $oCharge );
 				if ( !empty( $oNewInvoice ) ) {
 					$oInvoiceToReconcile = $oNewInvoice;
 				}
@@ -70,8 +67,7 @@ class InvoicesVerify {
 			if ( !is_null( $oInvoiceToReconcile ) ) {
 				$aInvoicesToReconcile[] = ( new InvoicesPartsToReconcileVO() )
 					->setFreeagentInvoice( $oInvoiceToReconcile )
-					->setStripeBalanceTransaction( $oBalTxn )
-					->setStripeCharge( Charge::retrieve( $oBalTxn->source ) );
+					->setChargeVo( $oCharge );
 			}
 
 			$nTxnCount++;
@@ -82,13 +78,6 @@ class InvoicesVerify {
 		}
 
 		return $aInvoicesToReconcile;
-	}
-
-	/**
-	 * @return BridgeInterface
-	 */
-	public function getBridge() {
-		return $this->oBridge;
 	}
 
 	/**
@@ -105,24 +94,5 @@ class InvoicesVerify {
 				->all();
 		}
 		return $this->aFreeagentInvoices;
-	}
-
-	/**
-	 * @return \Stripe\BalanceTransaction[]
-	 */
-	protected function getStripeBalanceTxns() {
-		return ( new GetStripeBalanceTransactionsFromPayout() )
-			->setStripePayout( $this->getStripePayout() )
-			->setTransactionType( 'charge' )
-			->retrieve();
-	}
-
-	/**
-	 * @param BridgeInterface $oBridge
-	 * @return $this
-	 */
-	public function setBridge( $oBridge ) {
-		$this->oBridge = $oBridge;
-		return $this;
 	}
 }

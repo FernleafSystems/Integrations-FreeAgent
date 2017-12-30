@@ -69,7 +69,7 @@ class FindForPayout {
 			->first();
 
 		if ( empty( $oBill ) ) {
-			throw new \Exception( sprintf( 'Failed to find bill in FreeAgent for Payout transfer ID %s', $oPayout->id ) );
+			throw new \Exception( sprintf( 'Failed to find bill in FreeAgent for Payout transfer ID %s', $oPayout->getId() ) );
 		}
 		return $oBill;
 	}

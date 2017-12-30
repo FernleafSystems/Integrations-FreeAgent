@@ -21,6 +21,7 @@ class ExplainBankTxnWithInvoices {
 	 */
 	public function run( $aInvoicesToReconcile ) {
 		$oConn = $this->getConnection();
+		$oPayout = $this->getPayoutVO();
 
 		$sBaseCurrency = $this->getBaseCurrency();
 		$sPayoutDatedOn = date( 'Y-m-d', $this->getPayoutVO()->getDateArrival() );
@@ -31,8 +32,7 @@ class ExplainBankTxnWithInvoices {
 		foreach ( $aInvoicesToReconcile as $oInvoiceItem ) {
 
 			$oInvoice = $oInvoiceItem->getFreeagentInvoice();
-			$oBalTxn = $oInvoiceItem->getStripeBalanceTransaction();
-			$oCharge = $oInvoiceItem->getStripeCharge();
+			$oCharge = $oInvoiceItem->getCharge();
 
 			if ( (int)$oInvoice->getValueDue() == 0 ) {
 				continue;
@@ -44,17 +44,18 @@ class ExplainBankTxnWithInvoices {
 					->setBankTxn( $oBankTxn )
 					->setInvoicePaid( $oInvoice )
 					->setDatedOn( $sPayoutDatedOn )
-					->setValue( (string)( $oBalTxn->amount/100 ) ); // native bank account currency amount
+					->setValue( (string)$oCharge->getAmount_Gross() ); // native bank account currency amount
 
+				$sChargeCurrency = $oCharge->getCurrency();
 				// e.g. we're explaining a USD invoice using a transaction in GBP bank account
-				if ( strcasecmp( $oCharge->currency, $oBalTxn->currency ) != 0 ) { //foreign currency converted by Stripe
-					$oCreator->setForeignCurrencyValue( $oCharge->amount/100 );
+				if ( strcasecmp( $sChargeCurrency, $oPayout->getCurrency() ) != 0 ) { //foreign currency converted by Stripe
+					$oCreator->setForeignCurrencyValue( $oCharge->getAmount_Gross() );
 				}
 				else {
 					// We do some optimisation with unrealised currency gains/losses.
 					try {
-						$nInvoiceDateRate = $oCurrencyEx->lookup( $sBaseCurrency, $oCharge->currency, $oInvoice->getDatedOn() );
-						$nPayoutDateRate = $oCurrencyEx->lookup( $sBaseCurrency, $oCharge->currency, $sPayoutDatedOn );
+						$nInvoiceDateRate = $oCurrencyEx->lookup( $sBaseCurrency, $sChargeCurrency, $oInvoice->getDatedOn() );
+						$nPayoutDateRate = $oCurrencyEx->lookup( $sBaseCurrency, $sChargeCurrency, $sPayoutDatedOn );
 
 						// if the target currency got stronger we'd have unrealised gains, so we negate
 						// them by changing the invoice creation date to be when we received the payout.
