@@ -41,6 +41,20 @@ interface BridgeInterface {
 	public function getFreeagentInvoiceId( $oCharge );
 
 	/**
+	 * @param Entities\Invoices\InvoiceVO $oInvoice
+	 * @param DataWrapper\ChargeVO        $oCharge
+	 * @return $this
+	 */
+	public function storeFreeagentInvoiceIdForCharge( $oInvoice, $oCharge );
+
+	/**
+	 * @param Entities\Bills\BillVO $oBill
+	 * @param DataWrapper\PayoutVO  $oPayout
+	 * @return $this
+	 */
+	public function storeFreeagentBillIdForPayout( $oBill, $oPayout );
+
+	/**
 	 * @param DataWrapper\ChargeVO $oCharge
 	 * @return bool
 	 */
