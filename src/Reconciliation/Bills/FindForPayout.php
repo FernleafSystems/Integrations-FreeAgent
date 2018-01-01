@@ -30,15 +30,11 @@ class FindForPayout {
 		$oBill = null;
 		$oPayout = $this->getPayoutVO();
 
-		if ( !empty( $oPayout->metadata[ 'ext_bill_id' ] ) ) {
+		if ( !empty( $oPayout->getExternalBillId() ) ) {
 			$oBill = ( new Entities\Bills\Retrieve() )
 				->setConnection( $this->getConnection() )
-				->setEntityId( $oPayout->metadata[ 'ext_bill_id' ] )
-				->sendRequestWithVoResponse();
-			if ( empty( $oBill ) ) {
-				$oPayout->metadata[ 'ext_bill_id' ] = null;
-				$oPayout->save();
-			}
+				->setEntityId( $oPayout->getExternalBillId() )
+				->retrieve();
 		}
 
 		if ( empty( $oBill ) ) {

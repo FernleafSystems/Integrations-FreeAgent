@@ -55,6 +55,27 @@ class PayoutVO {
 	}
 
 	/**
+	 * @return string
+	 */
+	public function getExternalBankTxnId() {
+		return $this->getParam( 'ext_bank_txn_id' );
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getExternalBillId() {
+		return $this->getParam( 'ext_bill_id' );
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getGateway() {
+		return $this->getStringParam( 'gateway' );
+	}
+
+	/**
 	 * @return float
 	 */
 	public function getTotalGross() {
@@ -124,6 +145,30 @@ class PayoutVO {
 	 */
 	public function setDateArrival( $mVal ) {
 		return $this->setParam( 'date_arrival', $mVal );
+	}
+
+	/**
+	 * @param int $mVal
+	 * @return $this
+	 */
+	public function setExternalBankTxnId( $mVal ) {
+		return $this->setParam( 'ext_bank_txn_id', $mVal );
+	}
+
+	/**
+	 * @param int $mVal
+	 * @return $this
+	 */
+	public function setExternalBillId( $mVal ) {
+		return $this->setParam( 'ext_bill_id', $mVal );
+	}
+
+	/**
+	 * @param string $sVal
+	 * @return $this
+	 */
+	public function setGateway( $sVal ) {
+		return $this->setParam( 'gateway', $sVal );
 	}
 
 	/**

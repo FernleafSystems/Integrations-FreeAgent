@@ -11,7 +11,7 @@ use FernleafSystems\Integrations\Freeagent\Reconciliation;
  * Class ProcessStripePayout
  * @package FernleafSystems\Integrations\Freeagent\Reconciliation
  */
-abstract class ProcessPayout {
+class ProcessPayout {
 
 	use Consumers\BridgeConsumer,
 		ConnectionConsumer,
@@ -26,6 +26,7 @@ abstract class ProcessPayout {
 	 * @throws \Exception
 	 */
 	public function process() {
+		$oBridge = $this->getBridge();
 		$oCon = $this->getConnection();
 		$oPayout = $this->getPayoutVO();
 		$oFreeagentConfig = $this->getFreeagentConfigVO();
@@ -44,24 +45,36 @@ abstract class ProcessPayout {
 			throw new \Exception( sprintf( 'Could not retrieve bank account with ID "%s".', $sBankId ) );
 		}
 
+		$oBankTxn = null;
+		$nBankTxnId = $oBridge->getExternalBankTxnId( $oPayout );
+		if ( !empty( $nBankTxnId ) ) {
+			$oBankTxn = ( new Entities\BankTransactions\Retrieve() )
+				->setConnection( $oCon )
+				->setEntityId( $nBankTxnId )
+				->retrieve();
+		}
+
 		// Find/Create the Freeagent Bank Transaction
-		$oBankTxn = ( new Reconciliation\BankTransactions\FindForPayout() )
-			->setConnection( $oCon )
-			->setPayoutVO( $oPayout )
-			->setBankAccountVo( $oBankAccount )
-			->find();
-		if ( empty( $oBankTxn ) ) {
-			if ( $oFreeagentConfig->isAutoCreateBankTransactions() ) {
-				$oBankTxn = ( new Reconciliation\BankTransactions\CreateForPayout() )
+		if ( empty( $oBankTxn ) && $oFreeagentConfig->isAutoLocateBankTransactions() ) {
+				$oBankTxn = ( new Reconciliation\BankTransactions\FindForPayout() )
 					->setConnection( $oCon )
 					->setPayoutVO( $oPayout )
 					->setBankAccountVo( $oBankAccount )
-					->create();
-			}
+					->find();
 		}
+		if ( empty( $oBankTxn ) && $oFreeagentConfig->isAutoCreateBankTransactions() ) {
+			$oBankTxn = ( new Reconciliation\BankTransactions\CreateForPayout() )
+				->setConnection( $oCon )
+				->setPayoutVO( $oPayout )
+				->setBankAccountVo( $oBankAccount )
+				->create();
+		}
+
 		if ( empty( $oBankTxn ) ) {
-			throw new \Exception( sprintf( 'Bank Transaction does not exist for this Payout "%s".', $oPayout->id ) );
+			throw new \Exception( sprintf( 'Bank Transaction does not exist for this Payout "%s".', $oPayout->getId() ) );
 		}
+
+		$oBridge->storeExternalBankTxnId( $oPayout, $oBankTxn );
 
 		// 1) Reconcile all the Invoices
 		( new Reconciliation\ProcessInvoicesForPayout() )

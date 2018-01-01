@@ -20,7 +20,7 @@ class FreeagentConfigVO {
 		$aAccounts = array();
 
 		foreach ( $this->getRawDataAsArray() as $sKey => $mValue ) {
-			if ( preg_match( '#^bank_account_id_[a-z]{3}$#i', $sKey )  ) {
+			if ( preg_match( '#^bank_account_id_[a-z]{3}$#i', $sKey ) ) {
 				$sCurrency = str_replace( 'bank_account_id_', '', $sKey );
 				$aAccounts[ $sCurrency ] = $mValue;
 			}
@@ -94,6 +94,13 @@ class FreeagentConfigVO {
 	}
 
 	/**
+	 * @return bool
+	 */
+	public function isAutoLocateBankTransactions() {
+		return (bool)$this->getParam( 'auto_locate_bank_txn' );
+	}
+
+	/**
 	 * @param int $nVal
 	 * @return $this
 	 */
@@ -119,7 +126,7 @@ class FreeagentConfigVO {
 
 	/**
 	 * @param string $sCurrency
-	 * @param int $nVal
+	 * @param int    $nVal
 	 * @return $this
 	 */
 	public function setBankAccountIdForCurrency( $sCurrency, $nVal ) {
@@ -164,5 +171,13 @@ class FreeagentConfigVO {
 	 */
 	public function setIsAutoCreateBankTransactions( $bAutoCreate = true ) {
 		return $this->setParam( 'auto_create_bank_txn', $bAutoCreate );
+	}
+
+	/**
+	 * @param bool $bAutoLocate
+	 * @return $this
+	 */
+	public function setIsAutoLocateBankTxns( $bAutoLocate = true ) {
+		return $this->setParam( 'auto_locate_bank_txn', $bAutoLocate );
 	}
 }

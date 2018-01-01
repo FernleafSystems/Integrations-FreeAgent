@@ -31,7 +31,8 @@ class CreateForPayout {
 				$this->getBankAccountVo(),
 				$oPayout->getDateArrival(),
 				$oPayout->getTotalNet(),//$oPayout->amount/100
-				sprintf( 'Automatically create bank transaction for Stripe Payout %s', $oPayout->getId() )
+				sprintf( 'Automatically create bank transaction for %s Payout %s',
+					$oPayout->getGateway(), $oPayout->getId() )
 			);
 
 		$oBankTxn = null;
