@@ -53,25 +53,25 @@ interface BridgeInterface {
 	public function getFreeagentInvoiceId( $oCharge );
 
 	/**
-	 * @param Entities\Invoices\InvoiceVO $oInvoice
 	 * @param DataWrapper\ChargeVO        $oCharge
+	 * @param Entities\Invoices\InvoiceVO $oInvoice
 	 * @return $this
 	 */
-	public function storeFreeagentInvoiceIdForCharge( $oInvoice, $oCharge );
+	public function storeFreeagentInvoiceIdForCharge( $oCharge, $oInvoice );
 
 	/**
-	 * @param Entities\BankTransactions\BankTransactionVO $oBankTxn
 	 * @param DataWrapper\PayoutVO                        $oPayout
+	 * @param Entities\BankTransactions\BankTransactionVO $oBankTxn
 	 * @return $this
 	 */
-	public function storeExternalBankTxnId( $oBankTxn, $oPayout );
+	public function storeExternalBankTxnId( $oPayout, $oBankTxn );
 
 	/**
-	 * @param Entities\Bills\BillVO $oBill
 	 * @param DataWrapper\PayoutVO  $oPayout
+	 * @param Entities\Bills\BillVO $oBill
 	 * @return $this
 	 */
-	public function storeExternalBillId( $oBill, $oPayout );
+	public function storeExternalBillId( $oPayout, $oBill );
 
 	/**
 	 * @param DataWrapper\ChargeVO $oCharge
