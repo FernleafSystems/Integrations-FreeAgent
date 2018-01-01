@@ -13,11 +13,39 @@ class PayoutVO {
 	use StdClassAdapter;
 
 	/**
+	 * @param ChargeVO $oCharge
+	 * @return $this
+	 */
+	public function addCharge( $oCharge ) {
+		if ( !$this->hasCharge( $oCharge ) ) {
+			$aC = $this->getCharges();
+			$aC[] = $oCharge;
+			$this->setCharges( $aC );
+		}
+		return $this;
+	}
+
+	/**
 	 * @return ChargeVO[]
 	 */
 	public function getCharges() {
 		$aC = $this->getArrayParam( 'charges' );
 		return is_array( $aC ) ? $aC : array();
+	}
+
+	/**
+	 * @param ChargeVO $oChargeVO
+	 * @return bool
+	 */
+	public function hasCharge( $oChargeVO ) {
+		$bExists = false;
+		foreach ( $this->getCharges() as $oCharge ) {
+			if ( $oCharge->getId() == $oChargeVO->getId() ) {
+				$bExists = true;
+				break;
+			}
+		}
+		return $bExists;
 	}
 
 	/**
