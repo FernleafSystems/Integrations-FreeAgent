@@ -138,6 +138,22 @@ class FreeagentConfigVO {
 	 * @param int $nVal
 	 * @return $this
 	 */
+	public function setBillCategoryId( $nVal ) {
+		return $this->setParam( 'bill_cat_id', $nVal );
+	}
+
+	/**
+	 * @param int $nVal
+	 * @return $this
+	 */
+	public function setBillContactId( $nVal ) {
+		return $this->setParam( 'contact_id', $nVal );
+	}
+
+	/**
+	 * @param int $nVal
+	 * @return $this
+	 */
 	public function setInvoiceItemCategoryId( $nVal ) {
 		return $this->setParam( 'invoice_item_cat_id', $nVal );
 	}
@@ -148,21 +164,5 @@ class FreeagentConfigVO {
 	 */
 	public function setIsAutoCreateBankTransactions( $bAutoCreate = true ) {
 		return $this->setParam( 'auto_create_bank_txn', $bAutoCreate );
-	}
-
-	/**
-	 * @param int $nVal
-	 * @return $this
-	 */
-	public function setBillCategoryId( $nVal ) {
-		return $this->setParam( 'bill_cat_id', $nVal );
-	}
-
-	/**
-	 * @param int $nVal
-	 * @return $this
-	 */
-	public function setContactId( $nVal ) {
-		return $this->setParam( 'contact_id', $nVal );
 	}
 }
