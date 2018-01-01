@@ -15,20 +15,20 @@ class ProcessPayout {
 
 	use Consumers\BridgeConsumer,
 		ConnectionConsumer,
-		Consumers\FreeagentConfigVoConsumer,
-		Consumers\PayoutVoConsumer;
+		Consumers\FreeagentConfigVoConsumer;
 
 	/**
 	 * - verify we can load the bank account
 	 * - verify we can load the bank transaction (maybe create it automatically if not)
 	 * - reconcile stripe charges with freeagent invoices
 	 * - reconcile stripe fees with freeagent bill
+	 * @param string $sPayoutId
 	 * @throws \Exception
 	 */
-	public function process() {
+	public function process( $sPayoutId ) {
 		$oBridge = $this->getBridge();
 		$oCon = $this->getConnection();
-		$oPayout = $this->getPayoutVO();
+		$oPayout = $oBridge->buildPayoutFromId( $sPayoutId );
 		$oFreeagentConfig = $this->getFreeagentConfigVO();
 
 		$sBankId = $oFreeagentConfig->getBankAccountIdForCurrency( $oPayout->getCurrency() );
@@ -56,11 +56,11 @@ class ProcessPayout {
 
 		// Find/Create the Freeagent Bank Transaction
 		if ( empty( $oBankTxn ) && $oFreeagentConfig->isAutoLocateBankTransactions() ) {
-				$oBankTxn = ( new Reconciliation\BankTransactions\FindForPayout() )
-					->setConnection( $oCon )
-					->setPayoutVO( $oPayout )
-					->setBankAccountVo( $oBankAccount )
-					->find();
+			$oBankTxn = ( new Reconciliation\BankTransactions\FindForPayout() )
+				->setConnection( $oCon )
+				->setPayoutVO( $oPayout )
+				->setBankAccountVo( $oBankAccount )
+				->find();
 		}
 		if ( empty( $oBankTxn ) && $oFreeagentConfig->isAutoCreateBankTransactions() ) {
 			$oBankTxn = ( new Reconciliation\BankTransactions\CreateForPayout() )
