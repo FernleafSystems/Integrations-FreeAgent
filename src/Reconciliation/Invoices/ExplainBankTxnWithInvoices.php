@@ -44,12 +44,12 @@ class ExplainBankTxnWithInvoices {
 					->setBankTxn( $oBankTxn )
 					->setInvoicePaid( $oInvoice )
 					->setDatedOn( $sPayoutDatedOn )
-					->setValue( (string)$oCharge->getAmount_Gross() ); // native bank account currency amount
+					->setValue( (string)$oInvoice->getValueGross() );
 
 				$sChargeCurrency = $oCharge->getCurrency();
 				// e.g. we're explaining a USD invoice using a transaction in GBP bank account
 				if ( strcasecmp( $sChargeCurrency, $oPayout->getCurrency() ) != 0 ) { //foreign currency converted by Stripe
-					$oCreator->setForeignCurrencyValue( $oCharge->getAmount_Gross() );
+					$oCreator->setForeignCurrencyValue( $oInvoice->getValueGross() );
 				}
 				else {
 					// We do some optimisation with unrealised currency gains/losses.

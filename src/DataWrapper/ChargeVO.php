@@ -20,6 +20,7 @@ class ChargeVO {
 	}
 
 	/**
+	 * This is not gross with taxes, but gross with payment processor fees
 	 * @return float
 	 */
 	public function getAmount_Gross() {
