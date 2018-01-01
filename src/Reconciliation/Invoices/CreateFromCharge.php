@@ -56,7 +56,7 @@ class CreateFromCharge {
 		}
 
 		$this->getBridge()
-			 ->storeFreeagentInvoiceIdForCharge( $oExportedInvoice, $oCharge );
+			 ->storeFreeagentInvoiceIdForCharge( $oCharge, $oExportedInvoice );
 
 		return $oExportedInvoice;
 	}

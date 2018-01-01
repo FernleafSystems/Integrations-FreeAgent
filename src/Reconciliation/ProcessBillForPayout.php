@@ -38,7 +38,7 @@ class ProcessBillForPayout {
 				->setPayoutVO( $oPayout )
 				->setFreeagentConfigVO( $this->getFreeagentConfigVO() )
 				->create();
-			$this->getBridge()->storeExternalBillId( $oBill, $oPayout );
+			$this->getBridge()->storeExternalBillId( $oPayout, $oBill );
 		}
 
 		( new ExplainBankTxnWithStripeBill() )
