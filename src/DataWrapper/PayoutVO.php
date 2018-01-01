@@ -34,21 +34,6 @@ class PayoutVO {
 	}
 
 	/**
-	 * @param ChargeVO $oChargeVO
-	 * @return bool
-	 */
-	public function hasCharge( $oChargeVO ) {
-		$bExists = false;
-		foreach ( $this->getCharges() as $oCharge ) {
-			if ( $oCharge->getId() == $oChargeVO->getId() ) {
-				$bExists = true;
-				break;
-			}
-		}
-		return $bExists;
-	}
-
-	/**
 	 * @return string
 	 */
 	public function getCurrency() {
@@ -100,6 +85,21 @@ class PayoutVO {
 			$nTotal += $oCh->getParam( $sKey );
 		}
 		return $nTotal;
+	}
+
+	/**
+	 * @param ChargeVO $oChargeVO
+	 * @return bool
+	 */
+	public function hasCharge( $oChargeVO ) {
+		$bExists = false;
+		foreach ( $this->getCharges() as $oCharge ) {
+			if ( $oCharge->getId() == $oChargeVO->getId() ) {
+				$bExists = true;
+				break;
+			}
+		}
+		return $bExists;
 	}
 
 	/**
