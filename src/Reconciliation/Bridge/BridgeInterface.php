@@ -7,6 +7,8 @@ use FernleafSystems\Integrations\Freeagent\DataWrapper;
 
 interface BridgeInterface {
 
+	const KEY_FREEAGENT_INVOICE_IDS = 'freeagent_invoice_ids';
+
 	/**
 	 * @param string $sTxnID
 	 * @return DataWrapper\ChargeVO
@@ -25,12 +27,6 @@ interface BridgeInterface {
 	 * @return Entities\Contacts\ContactVO
 	 */
 	public function createFreeagentContact( $oCharge, $bUpdateOnly = false );
-
-	/**
-	 * @param DataWrapper\ChargeVO $oCharge
-	 * @return Entities\Invoices\InvoiceVO
-	 */
-	public function createFreeagentInvoice( $oCharge );
 
 	/**
 	 * @param DataWrapper\ChargeVO $oCharge

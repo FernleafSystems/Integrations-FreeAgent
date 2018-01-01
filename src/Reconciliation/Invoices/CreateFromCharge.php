@@ -99,27 +99,4 @@ class CreateFromCharge {
 			->setEntityId( $this->getBridge()->getFreeagentContactId( $this->getChargeVO() ) )
 			->retrieve();
 	}
-
-	/**
-	 * TODO Take this out and put it in the building of a charge.
-	 * @return array
-	 */
-	protected function getTaxCountriesRates() {
-		$aCountriesToRates = array();
-		foreach ( edd_get_tax_rates() as $aCountryRate ) {
-			if ( !empty( $aCountryRate[ 'country' ] ) ) {
-				$aCountriesToRates[ $aCountryRate[ 'country' ] ] = $aCountryRate[ 'rate' ];
-			}
-		}
-		return $aCountriesToRates;
-	}
-
-	/**
-	 * @return bool
-	 */
-	protected function isPaymentEuVatMossRegion() {
-		$sPaymentCountry = $this->getChargeVO()->getCountry(); //$this->getPayment()->address[ 'country' ];
-		return ( $sPaymentCountry != 'GB' &&
-				 array_key_exists( $sPaymentCountry, $this->getTaxCountriesRates() ) );
-	}
 }

@@ -5,12 +5,14 @@ namespace FernleafSystems\Integrations\Freeagent\Reconciliation\Invoices;
 use FernleafSystems\ApiWrappers\Base\ConnectionConsumer;
 use FernleafSystems\ApiWrappers\Freeagent\Entities;
 use FernleafSystems\Integrations\Freeagent\Consumers\BridgeConsumer;
+use FernleafSystems\Integrations\Freeagent\Consumers\FreeagentConfigVoConsumer;
 use FernleafSystems\Integrations\Freeagent\Consumers\PayoutVoConsumer;
 
 class InvoicesVerify {
 
 	use BridgeConsumer,
 		ConnectionConsumer,
+		FreeagentConfigVoConsumer,
 		PayoutVoConsumer;
 
 	/**
@@ -30,6 +32,11 @@ class InvoicesVerify {
 		$oPayout = $this->getPayoutVO();
 
 		$aFreeagentInvoicesPool = $this->getFreeagentInvoicesPool();
+
+		$oInvoiceCreator = ( new CreateFromCharge() )
+			->setBridge( $this->getBridge() )
+			->setConnection( $this->getConnection() )
+			->setFreeagentConfigVO( $this->getFreeagentConfigVO() );
 
 		// Verify FreeAgent Invoice exists for each Stripe Balance Transaction
 		// that is represented in the Payout.
@@ -58,7 +65,8 @@ class InvoicesVerify {
 			}
 
 			if ( is_null( $oInvoiceToReconcile ) ) { // No Invoice, so we create it.
-				$oNewInvoice = $oBridge->createFreeagentInvoice( $oCharge );
+				$oNewInvoice = $oInvoiceCreator->setChargeVO( $oCharge )
+											   ->create();
 				if ( !empty( $oNewInvoice ) ) {
 					$oInvoiceToReconcile = $oNewInvoice;
 				}

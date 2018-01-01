@@ -33,6 +33,7 @@ class ProcessInvoicesForPayout {
 			->setConnection( $this->getConnection() )
 			->setPayoutVO( $this->getPayoutVO() )
 			->setBridge( $this->getBridge() )
+			->setFreeagentConfigVO( $this->getFreeagentConfigVO() )
 			->run();
 
 		( new ExplainBankTxnWithInvoices() )
