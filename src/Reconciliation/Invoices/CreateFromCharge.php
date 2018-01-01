@@ -54,6 +54,10 @@ class CreateFromCharge {
 			sleep( 2 );
 			$oExportedInvoice = $this->markInvoiceAsSent( $oExportedInvoice );
 		}
+
+		$this->getBridge()
+			 ->storeFreeagentInvoiceIdForCharge( $oExportedInvoice, $oCharge );
+
 		return $oExportedInvoice;
 	}
 

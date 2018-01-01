@@ -24,48 +24,31 @@ class CreateForPayout {
 	 * @return BillVO|null
 	 * @throws \Exception
 	 */
-	public function createBill() {
-		$oBill = ( new FindForPayout() )
-			->setConnection( $this->getConnection() )
-			->setPayoutVO( $this->getPayoutVO() )
-			->find();
-		if ( empty( $oBill ) ) {
-			$oBill = $this->create();
-		}
-		return $oBill;
-	}
-
-	/**
-	 * Also store Payout meta data: ext_bill_id to reference the FreeAgent Bill ID (saves us searching
-	 * for it later).
-	 * @return BillVO|null
-	 * @throws \Exception
-	 */
-	protected function create() {
+	public function create() {
 		$oFaConfig = $this->getFreeagentConfigVO();
 		$oPayout = $this->getPayoutVO();
 
 		$nTotalFees = $oPayout->getTotalFee();
 
-		/** @var ContactVO $oStripeContact */
-		$oStripeContact = ( new Retrieve() )
+		/** @var ContactVO $oBillContact */
+		$oBillContact = ( new Retrieve() )
 			->setConnection( $this->getConnection() )
 			->setEntityId( $oFaConfig->getContactId() )
 			->retrieve();
-		if ( empty( $oStripeContact ) ) {
+		if ( empty( $oBillContact ) ) {
 			throw new \Exception( sprintf( 'Failed to load FreeAgent Contact bill for Stripe with ID "%s" ', $oFaConfig->getContactId() ) );
 		}
 
 		$aComments = array(
-			sprintf( 'Bill for Stripe Payout: https://dashboard.stripe.com/payouts/%s', $oPayout->getId() ),
-			sprintf( 'Gross Amount: %s %s', $oPayout->getCurrency(), $oPayout->getTotalGross() ),
-			sprintf( 'Fees Total: %s %s', $oPayout->getCurrency(), $nTotalFees ),
-			sprintf( 'Net Amount: %s %s', $oPayout->getCurrency(), round( $oPayout->getTotalNet(), 2 ) )
+			sprintf( 'Bill for Payout: %s', $oPayout->getId() ),
+			sprintf( 'Payout Gross Amount: %s %s', $oPayout->getCurrency(), $oPayout->getTotalGross() ),
+			sprintf( 'Payout Fees Total: %s %s', $oPayout->getCurrency(), $nTotalFees ),
+			sprintf( 'Payout Net Amount: %s %s', $oPayout->getCurrency(), round( $oPayout->getTotalNet(), 2 ) )
 		);
 
 		$oBill = ( new Create() )
 			->setConnection( $this->getConnection() )
-			->setContact( $oStripeContact )
+			->setContact( $oBillContact )
 			->setReference( $oPayout->getId() )
 			->setDatedOn( $oPayout->getDateArrival() )
 			->setDueOn( $oPayout->getDateArrival() )
@@ -79,9 +62,6 @@ class CreateForPayout {
 		if ( empty( $oBill ) || empty( $oBill->getId() ) ) {
 			throw new \Exception( sprintf( 'Failed to create FreeAgent bill for Stripe Payout ID %s / ', $oPayout->getId() ) );
 		}
-
-		$oPayout->metadata[ 'ext_bill_id' ] = $oBill->getId();
-		$oPayout->save();
 
 		return $oBill;
 	}

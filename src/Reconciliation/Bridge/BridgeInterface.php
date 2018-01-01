@@ -29,6 +29,18 @@ interface BridgeInterface {
 	public function createFreeagentContact( $oCharge, $bUpdateOnly = false );
 
 	/**
+	 * @param DataWrapper\PayoutVO $oPayout
+	 * @return int|null
+	 */
+	public function getExternalBankTxnId( $oPayout );
+
+	/**
+	 * @param DataWrapper\PayoutVO $oPayout
+	 * @return int|null
+	 */
+	public function getExternalBillId( $oPayout );
+
+	/**
 	 * @param DataWrapper\ChargeVO $oCharge
 	 * @return int
 	 */
@@ -48,11 +60,18 @@ interface BridgeInterface {
 	public function storeFreeagentInvoiceIdForCharge( $oInvoice, $oCharge );
 
 	/**
+	 * @param Entities\BankTransactions\BankTransactionVO $oBankTxn
+	 * @param DataWrapper\PayoutVO                        $oPayout
+	 * @return $this
+	 */
+	public function storeExternalBankTxnId( $oBankTxn, $oPayout );
+
+	/**
 	 * @param Entities\Bills\BillVO $oBill
 	 * @param DataWrapper\PayoutVO  $oPayout
 	 * @return $this
 	 */
-	public function storeFreeagentBillIdForPayout( $oBill, $oPayout );
+	public function storeExternalBillId( $oBill, $oPayout );
 
 	/**
 	 * @param DataWrapper\ChargeVO $oCharge

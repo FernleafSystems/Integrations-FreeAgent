@@ -53,7 +53,7 @@ class InvoicesVerify {
 				continue;
 			}
 
-			$nFreeagentInvoiceId = $oBridge->getFreeagentContactId( $oCharge );
+			$nFreeagentInvoiceId = $oBridge->getFreeagentInvoiceId( $oCharge );
 			if ( !empty( $nFreeagentInvoiceId ) ) {
 				// Verify we've been able to load it.
 				foreach ( $aFreeagentInvoicesPool as $oInvoice ) {
