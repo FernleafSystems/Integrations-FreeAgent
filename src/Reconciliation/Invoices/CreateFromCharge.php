@@ -98,9 +98,6 @@ class CreateFromCharge {
 	 * @return Entities\Contacts\ContactVO
 	 */
 	public function getContact() {
-		return ( new Entities\Contacts\Retrieve() )
-			->setConnection( $this->getConnection() )
-			->setEntityId( $this->getBridge()->getFreeagentContactId( $this->getChargeVO() ) )
-			->retrieve();
+		return $this->getBridge()->createFreeagentContact( $this->getChargeVO() );
 	}
 }
