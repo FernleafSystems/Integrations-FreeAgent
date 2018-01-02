@@ -91,6 +91,7 @@ class ChargeVO {
 	}
 
 	/**
+	 * Out of 100%
 	 * @return float|int
 	 */
 	public function getItemTaxRate() {
@@ -98,7 +99,7 @@ class ChargeVO {
 		if ( $nVal > 0 && $nVal < 1 ) {
 			$nVal *= 100;
 		}
-		return abs( $nVal );
+		return abs( round( $nVal ) );
 	}
 
 	/**
