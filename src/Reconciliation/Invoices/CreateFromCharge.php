@@ -17,12 +17,13 @@ class CreateFromCharge {
 
 	/**
 	 * @return Entities\Invoices\InvoiceVO|null
+	 * @throws \Exception
 	 */
 	public function create() {
 		$oCharge = $this->getChargeVO();
 		$oContact = $this->getContact();
 
-		$oInvoiceCreator = ( new Entities\Invoices\Create() )
+		$oCreator = ( new Entities\Invoices\Create() )
 			->setConnection( $this->getConnection() )
 			->setContact( $oContact )
 			->setDatedOn( $oCharge->getDate() )
@@ -41,18 +42,23 @@ class CreateFromCharge {
 			->addInvoiceItemVOs( $this->buildLineItemsFromCartItem() );
 
 		if ( $oCharge->isEuVatMoss() ) {
-			$oInvoiceCreator->setEcPlaceOfSupply( $oContact->getCountry() )
+			$oCreator->setEcPlaceOfSupply( $oContact->getCountry() )
 							->setEcStatusVatMoss();
 		}
 		else {
-			$oInvoiceCreator->setEcStatusNonEc();
+			$oCreator->setEcStatusNonEc();
 		}
 
-		$oExportedInvoice = $oInvoiceCreator->create();
+		$oExportedInvoice = $oCreator->create();
 
 		if ( !is_null( $oExportedInvoice ) ) {
 			sleep( 2 );
 			$oExportedInvoice = $this->markInvoiceAsSent( $oExportedInvoice );
+		}
+		else {
+//			var_dump( $oCreator->getRawDataAsArray() );
+			throw new \Exception( sprintf( 'Could not create invoice for Charge %s: %s',
+				$oCharge->getId(), $oCreator->getLastError()->getMessage() ) );
 		}
 
 		$this->getBridge()
@@ -98,9 +104,6 @@ class CreateFromCharge {
 	 * @return Entities\Contacts\ContactVO
 	 */
 	public function getContact() {
-		return ( new Entities\Contacts\Retrieve() )
-			->setConnection( $this->getConnection() )
-			->setEntityId( $this->getBridge()->getFreeagentContactId( $this->getChargeVO() ) )
-			->retrieve();
+		return $this->getBridge()->createFreeagentContact( $this->getChargeVO() );
 	}
 }
