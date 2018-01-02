@@ -46,7 +46,7 @@ class CreateForPayout {
 			sprintf( 'Payout Net Amount: %s %s', $oPayout->getCurrency(), round( $oPayout->getTotalNet(), 2 ) )
 		);
 
-		$oBill = ( new Create() )
+		$oBillCreator = ( new Create() )
 			->setConnection( $this->getConnection() )
 			->setContact( $oBillContact )
 			->setReference( $oPayout->getId() )
@@ -55,14 +55,63 @@ class CreateForPayout {
 			->setCategoryId( $this->getFreeagentConfigVO()->getBillCategoryId() )
 			->setComment( implode( "\n", $aComments ) )
 			->setTotalValue( $nTotalFees )
-			->setSalesTaxRate( 0 )
-			->setEcStatus( 'EC Services' )
-			->create();
+			->setSalesTaxRate( 0 );
+
+		// TODO: This is a bit of a hack as no accounting for base account country.
+		if ( $this->isEuCountry( $oBillContact->getCountry() ) ) {
+			$oBillCreator->setEcStatus( 'EC Services' );
+		}
+
+		$oBill = $oBillCreator->create();
 
 		if ( empty( $oBill ) || empty( $oBill->getId() ) ) {
-			throw new \Exception( sprintf( 'Failed to create FreeAgent bill for Stripe Payout ID %s / ', $oPayout->getId() ) );
+			throw new \Exception( sprintf( 'Failed to create FreeAgent bill for Payout ID %s: %s ',
+				$oPayout->getId(), $oBillCreator->getLastError()->getMessage() ) );
 		}
 
 		return $oBill;
+	}
+
+	/**
+	 * @param string $sCountry
+	 * @return bool
+	 */
+	private function isEuCountry( $sCountry ) {
+		return in_array( strtolower( $sCountry ), array_map( 'strtolower', $this->getEuCountries() ) );
+	}
+
+	/**
+	 * @return string[]
+	 */
+	private function getEuCountries() {
+		return array(
+			'Austria',
+			'Belgium',
+			'Bulgaria',
+			'Croatia',
+			'Cyprus',
+			'Czech Republic',
+			'Denmark',
+			'Estonia',
+			'Finland',
+			'France',
+			'Germany',
+			'Greece',
+			'Hungary',
+			'Ireland',
+			'Italy',
+			'Latvia',
+			'Lithuania',
+			'Luxembourg',
+			'Malta',
+			'Netherlands',
+			'Poland',
+			'Portugal',
+			'Romania',
+			'Slovakia',
+			'Slovenia',
+			'Spain',
+			'Sweden'
+		);
 	}
 }
