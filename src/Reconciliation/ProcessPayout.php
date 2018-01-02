@@ -81,7 +81,7 @@ class ProcessPayout {
 			->setConnection( $oCon )
 			->setPayoutVO( $oPayout )
 			->setBankTransactionVo( $oBankTxn )
-			->setBridge( $this->getBridge() )
+			->setBridge( $oBridge )
 			->run();
 
 		// 2) Reconcile the Stripe Bill
@@ -90,6 +90,7 @@ class ProcessPayout {
 			->setPayoutVO( $oPayout )
 			->setFreeagentConfigVO( $oFreeagentConfig )
 			->setBankTransactionVo( $oBankTxn )
+			->setBridge( $oBridge )
 			->run();
 	}
 }
