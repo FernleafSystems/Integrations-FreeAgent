@@ -79,9 +79,10 @@ class ProcessPayout {
 		// 1) Reconcile all the Invoices
 		( new Reconciliation\ProcessInvoicesForPayout() )
 			->setConnection( $oCon )
+			->setBridge( $oBridge )
+			->setFreeagentConfigVO( $oFreeagentConfig )
 			->setPayoutVO( $oPayout )
 			->setBankTransactionVo( $oBankTxn )
-			->setBridge( $oBridge )
 			->run();
 
 		// 2) Reconcile the Stripe Bill

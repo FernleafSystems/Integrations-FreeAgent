@@ -20,8 +20,8 @@ class ProcessInvoicesForPayout {
 
 	use BankTransactionVoConsumer,
 		BridgeConsumer,
-		FreeagentConfigVoConsumer,
 		ConnectionConsumer,
+		FreeagentConfigVoConsumer,
 		PayoutVoConsumer;
 
 	/**
@@ -31,9 +31,9 @@ class ProcessInvoicesForPayout {
 
 		$aReconInvoiceData = ( new InvoicesVerify() )
 			->setConnection( $this->getConnection() )
-			->setPayoutVO( $this->getPayoutVO() )
 			->setBridge( $this->getBridge() )
 			->setFreeagentConfigVO( $this->getFreeagentConfigVO() )
+			->setPayoutVO( $this->getPayoutVO() )
 			->run();
 
 		( new ExplainBankTxnWithInvoices() )
