@@ -45,7 +45,7 @@ class ChargeVO {
 	 * @return string
 	 */
 	public function getCurrency() {
-		return strtolower( $this->getStringParam( 'currency_charge' ) );
+		return strtoupper( $this->getStringParam( 'currency' ) );
 	}
 
 	/**
