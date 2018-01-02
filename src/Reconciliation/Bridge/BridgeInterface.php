@@ -2,40 +2,80 @@
 
 namespace FernleafSystems\Integrations\Freeagent\Reconciliation\Bridge;
 
-use FernleafSystems\ApiWrappers\Freeagent\Entities\Contacts\ContactVO;
-use FernleafSystems\ApiWrappers\Freeagent\Entities\Invoices\InvoiceVO;
-use Stripe\BalanceTransaction;
+use FernleafSystems\ApiWrappers\Freeagent\Entities;
+use FernleafSystems\Integrations\Freeagent\DataWrapper;
 
 interface BridgeInterface {
 
-	/**
-	 * @param BalanceTransaction $oBalTxn
-	 * @param bool               $bUpdateOnly
-	 * @return ContactVO
-	 */
-	public function createFreeagentContact( $oBalTxn, $bUpdateOnly = false );
+	const KEY_FREEAGENT_INVOICE_IDS = 'freeagent_invoice_ids';
 
 	/**
-	 * @param string $sChargeTxnId
-	 * @return InvoiceVO
+	 * @param string $sTxnID
+	 * @return DataWrapper\ChargeVO
 	 */
-	public function createFreeagentInvoiceFromStripeBalanceTxn( $sChargeTxnId );
+	public function buildChargeFromTransaction( $sTxnID );
 
 	/**
-	 * @param BalanceTransaction $oBalTxn
+	 * @param string $sPayoutId
+	 * @return DataWrapper\PayoutVO
+	 */
+	public function buildPayoutFromId( $sPayoutId );
+
+	/**
+	 * @param DataWrapper\ChargeVO $oCharge
+	 * @param bool                 $bUpdateOnly
+	 * @return Entities\Contacts\ContactVO
+	 */
+	public function createFreeagentContact( $oCharge, $bUpdateOnly = false );
+
+	/**
+	 * @param DataWrapper\PayoutVO $oPayout
+	 * @return int|null
+	 */
+	public function getExternalBankTxnId( $oPayout );
+
+	/**
+	 * @param DataWrapper\PayoutVO $oPayout
+	 * @return int|null
+	 */
+	public function getExternalBillId( $oPayout );
+
+	/**
+	 * @param DataWrapper\ChargeVO $oCharge
 	 * @return int
 	 */
-	public function getFreeagentContactIdFromStripeBalTxn( $oBalTxn );
+	public function getFreeagentContactId( $oCharge );
 
 	/**
-	 * @param BalanceTransaction $oStripeTxn
+	 * @param DataWrapper\ChargeVO $oCharge
 	 * @return int
 	 */
-	public function getFreeagentInvoiceIdFromStripeBalanceTxn( $oStripeTxn );
+	public function getFreeagentInvoiceId( $oCharge );
 
 	/**
-	 * @param BalanceTransaction $oStripeTxn
+	 * @param DataWrapper\ChargeVO        $oCharge
+	 * @param Entities\Invoices\InvoiceVO $oInvoice
+	 * @return $this
+	 */
+	public function storeFreeagentInvoiceIdForCharge( $oCharge, $oInvoice );
+
+	/**
+	 * @param DataWrapper\PayoutVO                        $oPayout
+	 * @param Entities\BankTransactions\BankTransactionVO $oBankTxn
+	 * @return $this
+	 */
+	public function storeExternalBankTxnId( $oPayout, $oBankTxn );
+
+	/**
+	 * @param DataWrapper\PayoutVO  $oPayout
+	 * @param Entities\Bills\BillVO $oBill
+	 * @return $this
+	 */
+	public function storeExternalBillId( $oPayout, $oBill );
+
+	/**
+	 * @param DataWrapper\ChargeVO $oCharge
 	 * @return bool
 	 */
-	public function verifyStripeToInternalPaymentLink( $oStripeTxn );
+	public function verifyInternalPaymentLink( $oCharge );
 }

@@ -25,29 +25,11 @@ class FindForPayout {
 	 */
 	public function find() {
 		$oBankTxn = null;
-		$oPayout = $this->getPayoutVO();
 
-		if ( !empty( $oPayout->metadata[ 'ext_bank_txn_id' ] ) ) {
-			$oBankTxn = ( new Entities\BankTransactions\Retrieve() )
-				->setConnection( $this->getConnection() )
-				->setEntityId( $oPayout->metadata[ 'ext_bank_txn_id' ] )
-				->sendRequestWithVoResponse();
-
-			if ( empty( $oBankTxn ) ) {
-				$oPayout->metadata[ 'ext_bank_txn_id' ] = null;
-				$oPayout->save();
-			}
-		}
-
-		if ( empty( $oBankTxn ) ) {
-
-			foreach ( $this->getUnexplainedBankTxns() as $oTxn ) {
-				if ( (string)( $oTxn->getAmountTotal()*100 ) == (string)$oPayout->amount ) {
-					$oBankTxn = $oTxn;
-					$oPayout->metadata[ 'ext_bank_txn_id' ] = $oBankTxn->getId();
-					$oPayout->save();
-					break;
-				}
+		foreach ( $this->getUnexplainedBankTxns() as $oTxn ) {
+			if ( $oTxn->getAmountTotal()*100 == $this->getPayoutVO()->getTotalNet()*100 ) {
+				$oBankTxn = $oTxn;
+				break;
 			}
 		}
 
@@ -61,7 +43,7 @@ class FindForPayout {
 		/** @var Entities\BankTransactions\BankTransactionVO[] $aTxn */
 		$aTxn = ( new Entities\BankTransactions\Find() )
 			->setConnection( $this->getConnection() )
-			->filterByDateRange( $this->getPayoutVO()->arrival_date, 7 )
+			->filterByDateRange( $this->getPayoutVO()->getDateArrival(), 1 )
 			->setBankAccount( $this->getBankAccountVo() )
 			->filterByUnexplained()
 			->all();

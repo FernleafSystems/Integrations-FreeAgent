@@ -3,6 +3,7 @@
 namespace FernleafSystems\Integrations\Freeagent\Reconciliation\Invoices;
 
 use FernleafSystems\ApiWrappers\Freeagent\Entities\Invoices\InvoiceVO;
+use FernleafSystems\Integrations\Freeagent\DataWrapper\ChargeVO;
 use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
 
 class InvoicesPartsToReconcileVO {
@@ -17,17 +18,10 @@ class InvoicesPartsToReconcileVO {
 	}
 
 	/**
-	 * @return BalanceTransaction
+	 * @return ChargeVO
 	 */
-	public function getStripeBalanceTransaction() {
-		return $this->getParam( 'stripe_balance_txn' );
-	}
-
-	/**
-	 * @return Charge
-	 */
-	public function getStripeCharge() {
-		return $this->getParam( 'stripe_charge' );
+	public function getCharge() {
+		return $this->getParam( 'charge' );
 	}
 
 	/**
@@ -39,18 +33,10 @@ class InvoicesPartsToReconcileVO {
 	}
 
 	/**
-	 * @param BalanceTransaction $oBalTxn
+	 * @param ChargeVO $oBalTxn
 	 * @return $this
 	 */
-	public function setStripeBalanceTransaction( $oBalTxn ) {
-		return $this->setParam( 'stripe_balance_txn', $oBalTxn );
-	}
-
-	/**
-	 * @param Charge $oCharge
-	 * @return $this
-	 */
-	public function setStripeCharge( $oCharge ) {
-		return $this->setParam( 'stripe_charge', $oCharge );
+	public function setChargeVo( $oBalTxn ) {
+		return $this->setParam( 'charge', $oBalTxn );
 	}
 }
