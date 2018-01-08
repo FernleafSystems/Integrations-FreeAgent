@@ -27,7 +27,7 @@ class FindForPayout {
 		$oBankTxn = null;
 
 		foreach ( $this->getUnexplainedBankTxns() as $oTxn ) {
-			if ( $oTxn->getAmountTotal()*100 == $this->getPayoutVO()->getTotalNet()*100 ) {
+			if ( (string)$oTxn->getAmountTotal() == (string)$this->getPayoutVO()->getTotalNet() ) {
 				$oBankTxn = $oTxn;
 				break;
 			}
