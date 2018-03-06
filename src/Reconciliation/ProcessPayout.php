@@ -36,11 +36,10 @@ class ProcessPayout {
 			throw new \Exception( sprintf( 'No bank account specified for currency "%s".', $oPayout->getCurrency() ) );
 		}
 
-		/** @var Entities\BankAccounts\BankAccountVO $oBankAccount */
 		$oBankAccount = ( new Entities\BankAccounts\Retrieve() )
 			->setConnection( $oCon )
 			->setEntityId( $sBankId )
-			->sendRequestWithVoResponse();
+			->retrieve();
 		if ( empty( $oBankAccount ) ) {
 			throw new \Exception( sprintf( 'Could not retrieve bank account with ID "%s".', $sBankId ) );
 		}
