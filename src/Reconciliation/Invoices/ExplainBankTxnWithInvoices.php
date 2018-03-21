@@ -59,7 +59,9 @@ class ExplainBankTxnWithInvoices {
 
 						// if the target currency got stronger we'd have unrealised gains, so we negate
 						// them by changing the invoice creation date to be when we received the payout.
-						if ( $nInvoiceDateRate > $nPayoutDateRate ) {
+						// TODO: Further investigate this and whether it's just shifting the gains
+						// and losses to the date of the invoice.
+						if ( false && $nInvoiceDateRate > $nPayoutDateRate ) {
 							( new Entities\Invoices\MarkAs() )
 								->setConnection( $oConn )
 								->setEntityId( $oInvoice->getId() )
