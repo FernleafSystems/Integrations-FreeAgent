@@ -114,21 +114,24 @@ class PayoutVO {
 	 * @return float
 	 */
 	public function getTotalGross() {
-		return $this->getChargeTotalTally( 'amount_gross' );
+		return $this->getChargeTotalTally( 'amount_gross' )
+			   + $this->getRefundTotalTally( 'amount_gross' );
 	}
 
 	/**
 	 * @return float
 	 */
 	public function getTotalFee() {
-		return $this->getChargeTotalTally( 'amount_fee' );
+		return $this->getChargeTotalTally( 'amount_fee' )
+			   + $this->getRefundTotalTally( 'amount_fee' );
 	}
 
 	/**
 	 * @return int
 	 */
 	public function getTotalNet() {
-		return $this->getChargeTotalTally( 'amount_net' );
+		return $this->getChargeTotalTally( 'amount_net' )
+			   + $this->getRefundTotalTally( 'amount_net' );
 	}
 
 	/**
@@ -139,6 +142,18 @@ class PayoutVO {
 		$nTotal = 0;
 		foreach ( $this->getCharges() as $oCh ) {
 			$nTotal += $oCh->getParam( $sKey );
+		}
+		return $nTotal;
+	}
+
+	/**
+	 * @param string $sKey
+	 * @return float
+	 */
+	protected function getRefundTotalTally( $sKey ) {
+		$nTotal = 0;
+		foreach ( $this->getRefunds() as $oR ) {
+			$nTotal += $oR->getParam( $sKey );
 		}
 		return $nTotal;
 	}

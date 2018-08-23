@@ -51,6 +51,9 @@ class ProcessPayout {
 				->setConnection( $oCon )
 				->setEntityId( $nBankTxnId )
 				->retrieve();
+			if ( !empty( $oBankTxn ) && $oBankTxn->getAmountTotal() != $oPayout->getTotalNet() ) {
+				$oBankTxn = null; // useful if we're trying to correct something after the fact.
+			}
 		}
 
 		// Find/Create the Freeagent Bank Transaction
