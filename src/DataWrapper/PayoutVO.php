@@ -13,6 +13,20 @@ class PayoutVO {
 	use StdClassAdapter;
 
 	/**
+	 * @param ChargeVO|RefundVO $oItem
+	 * @return $this
+	 */
+	public function addItem( $oItem ) {
+		if ( $oItem instanceof ChargeVO ) {
+			$this->addCharge( $oItem );
+		}
+		else if ( $oItem instanceof RefundVO ) {
+			$this->addRefund( $oItem );
+		}
+		return $this;
+	}
+
+	/**
 	 * @param ChargeVO $oCharge
 	 * @return $this
 	 */
@@ -26,11 +40,32 @@ class PayoutVO {
 	}
 
 	/**
+	 * @param RefundVO $oRefund
+	 * @return $this
+	 */
+	public function addRefund( $oRefund ) {
+		if ( !$this->hasRefund( $oRefund ) ) {
+			$aR = $this->getRefunds();
+			$aR[] = $oRefund;
+			$this->setRefunds( $aR );
+		}
+		return $this;
+	}
+
+	/**
 	 * @return ChargeVO[]
 	 */
 	public function getCharges() {
-		$aC = $this->getArrayParam( 'charges' );
-		return is_array( $aC ) ? $aC : array();
+		$a = $this->getArrayParam( 'charges' );
+		return is_array( $a ) ? $a : array();
+	}
+
+	/**
+	 * @return RefundVO[]
+	 */
+	public function getRefunds() {
+		$a = $this->getArrayParam( 'refunds' );
+		return is_array( $a ) ? $a : array();
 	}
 
 	/**
@@ -79,21 +114,24 @@ class PayoutVO {
 	 * @return float
 	 */
 	public function getTotalGross() {
-		return $this->getChargeTotalTally( 'amount_gross' );
+		return $this->getChargeTotalTally( 'amount_gross' )
+			   + $this->getRefundTotalTally( 'amount_gross' );
 	}
 
 	/**
 	 * @return float
 	 */
 	public function getTotalFee() {
-		return $this->getChargeTotalTally( 'amount_fee' );
+		return $this->getChargeTotalTally( 'amount_fee' )
+			   + $this->getRefundTotalTally( 'amount_fee' );
 	}
 
 	/**
 	 * @return int
 	 */
 	public function getTotalNet() {
-		return $this->getChargeTotalTally( 'amount_net' );
+		return $this->getChargeTotalTally( 'amount_net' )
+			   + $this->getRefundTotalTally( 'amount_net' );
 	}
 
 	/**
@@ -104,6 +142,18 @@ class PayoutVO {
 		$nTotal = 0;
 		foreach ( $this->getCharges() as $oCh ) {
 			$nTotal += $oCh->getParam( $sKey );
+		}
+		return $nTotal;
+	}
+
+	/**
+	 * @param string $sKey
+	 * @return float
+	 */
+	protected function getRefundTotalTally( $sKey ) {
+		$nTotal = 0;
+		foreach ( $this->getRefunds() as $oR ) {
+			$nTotal += $oR->getParam( $sKey );
 		}
 		return $nTotal;
 	}
@@ -124,11 +174,34 @@ class PayoutVO {
 	}
 
 	/**
+	 * @param RefundVO $oRefund
+	 * @return bool
+	 */
+	public function hasRefund( $oRefund ) {
+		$bExists = false;
+		foreach ( $this->getRefunds() as $oR ) {
+			if ( $oR->getId() == $oRefund->getId() ) {
+				$bExists = true;
+				break;
+			}
+		}
+		return $bExists;
+	}
+
+	/**
 	 * @param ChargeVO[] $mVal
 	 * @return $this
 	 */
 	public function setCharges( $mVal ) {
 		return $this->setParam( 'charges', $mVal );
+	}
+
+	/**
+	 * @param RefundVO[] $aR
+	 * @return $this
+	 */
+	public function setRefunds( $aR ) {
+		return $this->setParam( 'refunds', $aR );
 	}
 
 	/**

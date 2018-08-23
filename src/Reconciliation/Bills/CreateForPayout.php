@@ -3,12 +3,8 @@
 namespace FernleafSystems\Integrations\Freeagent\Reconciliation\Bills;
 
 use FernleafSystems\ApiWrappers\Base\ConnectionConsumer;
-use FernleafSystems\ApiWrappers\Freeagent\Entities\Bills\BillVO;
-use FernleafSystems\ApiWrappers\Freeagent\Entities\Bills\Create;
-use FernleafSystems\ApiWrappers\Freeagent\Entities\Contacts\ContactVO;
-use FernleafSystems\ApiWrappers\Freeagent\Entities\Contacts\Retrieve;
-use FernleafSystems\Integrations\Freeagent\Consumers\FreeagentConfigVoConsumer;
-use FernleafSystems\Integrations\Freeagent\Consumers\PayoutVoConsumer;
+use FernleafSystems\ApiWrappers\Freeagent\Entities;
+use FernleafSystems\Integrations\Freeagent\Consumers;
 
 /**
  * Class CreateForPayout
@@ -17,11 +13,11 @@ use FernleafSystems\Integrations\Freeagent\Consumers\PayoutVoConsumer;
 class CreateForPayout {
 
 	use ConnectionConsumer,
-		FreeagentConfigVoConsumer,
-		PayoutVoConsumer;
+		Consumers\FreeagentConfigVoConsumer,
+		Consumers\PayoutVoConsumer;
 
 	/**
-	 * @return BillVO|null
+	 * @return Entities\Bills\BillVO|null
 	 * @throws \Exception
 	 */
 	public function create() {
@@ -30,8 +26,7 @@ class CreateForPayout {
 
 		$nTotalFees = $oPayout->getTotalFee();
 
-		/** @var ContactVO $oBillContact */
-		$oBillContact = ( new Retrieve() )
+		$oBillContact = ( new Entities\Contacts\Retrieve() )
 			->setConnection( $this->getConnection() )
 			->setEntityId( $oFaConfig->getContactId() )
 			->retrieve();
@@ -46,7 +41,7 @@ class CreateForPayout {
 			sprintf( 'Payout Net Amount: %s %s', $oPayout->getCurrency(), round( $oPayout->getTotalNet(), 2 ) )
 		);
 
-		$oBillCreator = ( new Create() )
+		$oBillCreator = ( new Entities\Bills\Create() )
 			->setConnection( $this->getConnection() )
 			->setContact( $oBillContact )
 			->setReference( $oPayout->getId() )
@@ -91,6 +86,7 @@ class CreateForPayout {
 			'Croatia',
 			'Cyprus',
 			'Czech Republic',
+			'Czechia',
 			'Denmark',
 			'Estonia',
 			'Finland',

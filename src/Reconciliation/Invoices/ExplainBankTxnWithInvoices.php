@@ -43,7 +43,7 @@ class ExplainBankTxnWithInvoices {
 					->setConnection( $oConn )
 					->setBankTxn( $oBankTxn )
 					->setInvoicePaid( $oInvoice )
-					->setDatedOn( $sPayoutDatedOn )
+					->setDatedOn( $sPayoutDatedOn ) // also consider: $oInvoice->getDatedOn()
 					->setValue( (string)$oInvoice->getValueGross() );
 
 				$sChargeCurrency = $oCharge->getCurrency();

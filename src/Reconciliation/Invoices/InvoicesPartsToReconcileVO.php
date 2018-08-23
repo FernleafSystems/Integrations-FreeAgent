@@ -6,6 +6,10 @@ use FernleafSystems\ApiWrappers\Freeagent\Entities\Invoices\InvoiceVO;
 use FernleafSystems\Integrations\Freeagent\DataWrapper\ChargeVO;
 use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
 
+/**
+ * Class InvoicesPartsToReconcileVO
+ * @package FernleafSystems\Integrations\Freeagent\Reconciliation\Invoices
+ */
 class InvoicesPartsToReconcileVO {
 
 	use StdClassAdapter;
