@@ -16,7 +16,7 @@ class ChargeVO {
 	 * @return float
 	 */
 	public function getAmount_Net() {
-		return $this->getNumericParam( 'amount_net' ); //TODO: Ensure Stripe's value is /100
+		return $this->getNumericParam( 'amount_net' );
 	}
 
 	/**
@@ -24,14 +24,14 @@ class ChargeVO {
 	 * @return float
 	 */
 	public function getAmount_Gross() {
-		return $this->getNumericParam( 'amount_gross' ); //TODO: Ensure Stripe's value is /100
+		return $this->getNumericParam( 'amount_gross' );
 	}
 
 	/**
 	 * @return float
 	 */
 	public function getAmount_Fee() {
-		return $this->getNumericParam( 'amount_fee' ); //TODO: Ensure Stripe's value is /100
+		return $this->getNumericParam( 'amount_fee' );
 	}
 
 	/**
