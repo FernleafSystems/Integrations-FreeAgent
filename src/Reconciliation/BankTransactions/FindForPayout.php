@@ -4,8 +4,7 @@ namespace FernleafSystems\Integrations\Freeagent\Reconciliation\BankTransactions
 
 use FernleafSystems\ApiWrappers\Base\ConnectionConsumer;
 use FernleafSystems\ApiWrappers\Freeagent\Entities;
-use FernleafSystems\Integrations\Freeagent\Consumers\BankAccountVoConsumer;
-use FernleafSystems\Integrations\Freeagent\Consumers\PayoutVoConsumer;
+use FernleafSystems\Integrations\Freeagent\Consumers;
 use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
 
 /**
@@ -14,39 +13,21 @@ use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
  */
 class FindForPayout {
 
-	use BankAccountVoConsumer,
+	use Consumers\BankAccountVoConsumer,
+		Consumers\PayoutVoConsumer,
 		ConnectionConsumer,
-		StdClassAdapter,
-		PayoutVoConsumer;
+		StdClassAdapter;
 
 	/**
 	 * @return Entities\BankTransactions\BankTransactionVO|null
 	 * @throws \Exception
 	 */
 	public function find() {
-		$oBankTxn = null;
-
-		foreach ( $this->getUnexplainedBankTxns() as $oTxn ) {
-			if ( (string)$oTxn->getAmountTotal() == (string)$this->getPayoutVO()->getTotalNet() ) {
-				$oBankTxn = $oTxn;
-				break;
-			}
-		}
-
-		return $oBankTxn;
-	}
-
-	/**
-	 * @return Entities\BankTransactions\BankTransactionVO[]
-	 */
-	protected function getUnexplainedBankTxns() {
-		/** @var Entities\BankTransactions\BankTransactionVO[] $aTxn */
-		$aTxn = ( new Entities\BankTransactions\Find() )
+		return ( new Entities\BankTransactions\Finder() )
 			->setConnection( $this->getConnection() )
 			->filterByDateRange( $this->getPayoutVO()->getDateArrival(), 1 )
-			->setBankAccount( $this->getBankAccountVo() )
+			->filterByBankAccount( $this->getBankAccountVo() )
 			->filterByUnexplained()
-			->all();
-		return $aTxn;
+			->byAmount( $this->getPayoutVO()->getTotalNet() );
 	}
 }

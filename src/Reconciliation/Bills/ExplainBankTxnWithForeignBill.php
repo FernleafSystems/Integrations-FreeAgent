@@ -4,13 +4,9 @@ namespace FernleafSystems\Integrations\Freeagent\Reconciliation\Bills;
 
 use FernleafSystems\ApiWrappers\Base\ConnectionConsumer;
 use FernleafSystems\ApiWrappers\Freeagent\Entities\BankTransactionExplanation;
-use FernleafSystems\ApiWrappers\Freeagent\Entities\BankTransactions\BankTransactionVO;
-use FernleafSystems\ApiWrappers\Freeagent\Entities\BankTransactions\Retrieve;
-use FernleafSystems\ApiWrappers\Freeagent\Entities\Bills\BillVO;
-use FernleafSystems\ApiWrappers\Freeagent\Entities\Bills\Update;
-use FernleafSystems\Integrations\Freeagent\Consumers\BankAccountVoConsumer;
-use FernleafSystems\Integrations\Freeagent\Consumers\BankTransactionVoConsumer;
-use FernleafSystems\Integrations\Freeagent\Consumers\PayoutVoConsumer;
+use FernleafSystems\ApiWrappers\Freeagent\Entities\BankTransactions;
+use FernleafSystems\ApiWrappers\Freeagent\Entities\Bills;
+use FernleafSystems\Integrations\Freeagent\Consumers;
 
 /**
  * Class ExplainBankTxnWithForeignBill
@@ -18,13 +14,13 @@ use FernleafSystems\Integrations\Freeagent\Consumers\PayoutVoConsumer;
  */
 class ExplainBankTxnWithForeignBill {
 
-	use BankAccountVoConsumer,
-		BankTransactionVoConsumer,
-		PayoutVoConsumer,
+	use Consumers\BankAccountVoConsumer,
+		Consumers\BankTransactionVoConsumer,
+		Consumers\PayoutVoConsumer,
 		ConnectionConsumer;
 
 	/**
-	 * @param BillVO $oBill
+	 * @param Bills\BillVO $oBill
 	 * @return bool
 	 * @throws \Exception
 	 */
@@ -37,7 +33,7 @@ class ExplainBankTxnWithForeignBill {
 	}
 
 	/**
-	 * @param BillVO $oBill
+	 * @param Bills\BillVO $oBill
 	 * @return BankTransactionExplanation\BankTransactionExplanationVO
 	 * @throws \Exception
 	 */
@@ -56,7 +52,7 @@ class ExplainBankTxnWithForeignBill {
 	}
 
 	/**
-	 * @param BillVO $oBill
+	 * @param Bills\BillVO $oBill
 	 * @return BankTransactionExplanation\BankTransactionExplanationVO|null
 	 * @throws \Exception
 	 */
@@ -66,7 +62,7 @@ class ExplainBankTxnWithForeignBill {
 			->setConnection( $this->getConnection() )
 			->setBankTxn( $this->getBankTransactionVo() )
 			->setTargetBankAccount( $this->getBankAccountVo() )
-			->setValue( -1 * $oBill->getAmountTotal() ) // -1 as it's leaving the account
+			->setValue( -1*$oBill->getAmountTotal() )// -1 as it's leaving the account
 			->create();
 		if ( empty( $oBankTransferExplanationTxn ) ) {
 			throw new \Exception( 'Failed to explain bank transfer transaction in FreeAgent.' );
@@ -77,27 +73,27 @@ class ExplainBankTxnWithForeignBill {
 
 	/**
 	 * @param BankTransactionExplanation\BankTransactionExplanationVO $oBankTransferExplTxn
-	 * @return BankTransactionVO|null
+	 * @return BankTransactions\BankTransactionVO|null
 	 */
 	protected function getNewLinkedBankTransferTransaction( $oBankTransferExplTxn ) {
 		$oLinkedBankTxnExpl = ( new BankTransactionExplanation\RetrieveLinked() )
 			->setConnection( $this->getConnection() )
 			->setExplanation( $oBankTransferExplTxn )
 			->sendRequestWithVoResponse();
-		return ( new Retrieve() )
+		return ( new BankTransactions\Retrieve() )
 			->setConnection( $this->getConnection() )
 			->setEntityId( $oLinkedBankTxnExpl->getBankTransactionId() )
 			->sendRequestWithVoResponse();
 	}
 
 	/**
-	 * @param BillVO $oBill
-	 * @param float  $nNewValue
-	 * @return BillVO|null
+	 * @param Bills\BillVO $oBill
+	 * @param float        $nNewValue
+	 * @return Bills\BillVO|null
 	 * @throws \Exception
 	 */
 	protected function updateBillWithNewValue( $oBill, $nNewValue ) {
-		$oBill = ( new Update() )
+		$oBill = ( new Bills\Update() )
 			->setConnection( $this->getConnection() )
 			->setTotalValue( $nNewValue )
 			->setEntityId( $oBill->getId() )
@@ -105,7 +101,7 @@ class ExplainBankTxnWithForeignBill {
 		if ( empty( $oBill ) ) {
 			throw new \Exception( 'Failed to update Bill with new total value' );
 		}
-		return ( new \FernleafSystems\ApiWrappers\Freeagent\Entities\Bills\Retrieve() )
+		return ( new Bills\Retrieve() )
 			->setConnection( $this->getConnection() )
 			->setEntityId( $oBill->getId() )
 			->sendRequestWithVoResponse();

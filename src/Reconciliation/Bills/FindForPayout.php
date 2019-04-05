@@ -59,11 +59,10 @@ class FindForPayout {
 		$oPayout = $this->getPayoutVO();
 
 		/** @var Entities\Bills\BillVO $oBill */
-		$oBill = ( new Entities\Bills\Find() )
+		$oBill = ( new Entities\Bills\Finder() )
 			->setConnection( $this->getConnection() )
 			->filterByDateRange( $oPayout->getDateArrival(), 5 )
-			->filterByReference( $oPayout->getId() )
-			->first();
+			->findByReference( $oPayout->getId() );
 
 		if ( empty( $oBill ) ) {
 			throw new \Exception( sprintf( 'Failed to find bill in FreeAgent for Payout transfer ID %s', $oPayout->getId() ) );
