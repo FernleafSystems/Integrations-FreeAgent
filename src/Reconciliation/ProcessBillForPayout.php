@@ -4,12 +4,8 @@ namespace FernleafSystems\Integrations\Freeagent\Reconciliation;
 
 use FernleafSystems\ApiWrappers\Base\ConnectionConsumer;
 use FernleafSystems\ApiWrappers\Freeagent\Entities;
-use FernleafSystems\Integrations\Freeagent\Consumers\BankTransactionVoConsumer;
-use FernleafSystems\Integrations\Freeagent\Consumers\BridgeConsumer;
-use FernleafSystems\Integrations\Freeagent\Consumers\FreeagentConfigVoConsumer;
-use FernleafSystems\Integrations\Freeagent\Consumers\PayoutVoConsumer;
-use FernleafSystems\Integrations\Freeagent\Reconciliation\Bills\CreateForPayout;
-use FernleafSystems\Integrations\Freeagent\Reconciliation\Bills\ExplainBankTxnWithStripeBill;
+use FernleafSystems\Integrations\Freeagent\Consumers;
+use FernleafSystems\Integrations\Freeagent\Reconciliation\Bills;
 
 /**
  * Class ProcessBillForPayout
@@ -17,11 +13,11 @@ use FernleafSystems\Integrations\Freeagent\Reconciliation\Bills\ExplainBankTxnWi
  */
 class ProcessBillForPayout {
 
-	use BankTransactionVoConsumer,
-		BridgeConsumer,
-		ConnectionConsumer,
-		FreeagentConfigVoConsumer,
-		PayoutVoConsumer;
+	use Consumers\BankTransactionVoConsumer,
+		Consumers\FreeagentConfigVoConsumer,
+		Consumers\PayoutVoConsumer,
+		Consumers\BridgeConsumer,
+		ConnectionConsumer;
 
 	/**
 	 * @throws \Exception
@@ -33,7 +29,7 @@ class ProcessBillForPayout {
 
 		$oBill = $this->retrieveExistingBill();
 		if ( empty( $oBill ) ) {
-			$oBill = ( new CreateForPayout() )
+			$oBill = ( new Bills\CreateForPayout() )
 				->setConnection( $this->getConnection() )
 				->setPayoutVO( $oPayout )
 				->setFreeagentConfigVO( $this->getFreeagentConfigVO() )
@@ -41,7 +37,7 @@ class ProcessBillForPayout {
 			$this->getBridge()->storeExternalBillId( $oPayout, $oBill );
 		}
 
-		( new ExplainBankTxnWithStripeBill() )
+		( new Bills\ExplainBankTxnWithStripeBill() )
 			->setConnection( $this->getConnection() )
 			->setPayoutVO( $oPayout )
 			->setBankTransactionVo( $this->getBankTransactionVo() )

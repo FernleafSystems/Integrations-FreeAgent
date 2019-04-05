@@ -61,7 +61,7 @@ class CreateForPayout {
 
 		if ( empty( $oBill ) || empty( $oBill->getId() ) ) {
 			throw new \Exception( sprintf( 'Failed to create FreeAgent bill for Payout ID %s: %s ',
-				$oPayout->getId(), $oBillCreator->getLastError()->getMessage() ) );
+				$oPayout->getId(), $oBillCreator->getLastErrorContent() ) );
 		}
 
 		return $oBill;

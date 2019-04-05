@@ -14,8 +14,8 @@ use FernleafSystems\Integrations\Freeagent\Reconciliation;
 class ProcessPayout {
 
 	use Consumers\BridgeConsumer,
-		ConnectionConsumer,
-		Consumers\FreeagentConfigVoConsumer;
+		Consumers\FreeagentConfigVoConsumer,
+		ConnectionConsumer;
 
 	/**
 	 * - verify we can load the bank account

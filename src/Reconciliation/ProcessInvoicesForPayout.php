@@ -3,12 +3,8 @@
 namespace FernleafSystems\Integrations\Freeagent\Reconciliation;
 
 use FernleafSystems\ApiWrappers\Base\ConnectionConsumer;
-use FernleafSystems\Integrations\Freeagent\Consumers\BankTransactionVoConsumer;
-use FernleafSystems\Integrations\Freeagent\Consumers\BridgeConsumer;
-use FernleafSystems\Integrations\Freeagent\Consumers\FreeagentConfigVoConsumer;
-use FernleafSystems\Integrations\Freeagent\Consumers\PayoutVoConsumer;
-use FernleafSystems\Integrations\Freeagent\Reconciliation\Invoices\ExplainBankTxnWithInvoices;
-use FernleafSystems\Integrations\Freeagent\Reconciliation\Invoices\InvoicesVerify;
+use FernleafSystems\Integrations\Freeagent\Consumers;
+use FernleafSystems\Integrations\Freeagent\Reconciliation\Invoices;
 
 /**
  * Verifies all invoices associated with the payout are present and accurate within Freeagent
@@ -18,25 +14,25 @@ use FernleafSystems\Integrations\Freeagent\Reconciliation\Invoices\InvoicesVerif
  */
 class ProcessInvoicesForPayout {
 
-	use BankTransactionVoConsumer,
-		BridgeConsumer,
-		ConnectionConsumer,
-		FreeagentConfigVoConsumer,
-		PayoutVoConsumer;
+	use Consumers\BankTransactionVoConsumer,
+		Consumers\FreeagentConfigVoConsumer,
+		Consumers\PayoutVoConsumer,
+		Consumers\BridgeConsumer,
+		ConnectionConsumer;
 
 	/**
 	 * @throws \Exception
 	 */
 	public function run() {
 
-		$aReconInvoiceData = ( new InvoicesVerify() )
+		$aReconInvoiceData = ( new Invoices\InvoicesVerify() )
 			->setConnection( $this->getConnection() )
 			->setBridge( $this->getBridge() )
 			->setFreeagentConfigVO( $this->getFreeagentConfigVO() )
 			->setPayoutVO( $this->getPayoutVO() )
 			->run();
 
-		( new ExplainBankTxnWithInvoices() )
+		( new Invoices\ExplainBankTxnWithInvoices() )
 			->setConnection( $this->getConnection() )
 			->setPayoutVO( $this->getPayoutVO() )
 			->setBridge( $this->getBridge() )

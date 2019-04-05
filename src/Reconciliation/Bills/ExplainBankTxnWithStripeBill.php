@@ -4,9 +4,7 @@ namespace FernleafSystems\Integrations\Freeagent\Reconciliation\Bills;
 
 use FernleafSystems\ApiWrappers\Base\ConnectionConsumer;
 use FernleafSystems\ApiWrappers\Freeagent\Entities;
-use FernleafSystems\Integrations\Freeagent\Consumers\BankTransactionVoConsumer;
-use FernleafSystems\Integrations\Freeagent\Consumers\FreeagentConfigVoConsumer;
-use FernleafSystems\Integrations\Freeagent\Consumers\PayoutVoConsumer;
+use FernleafSystems\Integrations\Freeagent\Consumers;
 
 /**
  * Retrieve the Stripe Bill within FreeAgent, and the associated Bank Transaction
@@ -16,10 +14,10 @@ use FernleafSystems\Integrations\Freeagent\Consumers\PayoutVoConsumer;
  */
 class ExplainBankTxnWithStripeBill {
 
-	use BankTransactionVoConsumer,
-		ConnectionConsumer,
-		FreeagentConfigVoConsumer,
-		PayoutVoConsumer;
+	use Consumers\BankTransactionVoConsumer,
+		Consumers\FreeagentConfigVoConsumer,
+		Consumers\PayoutVoConsumer,
+		ConnectionConsumer;
 
 	/**
 	 * Determine whether we're working in our native currency, or whether

@@ -3,10 +3,8 @@
 namespace FernleafSystems\Integrations\Freeagent\Reconciliation\BankTransactions;
 
 use FernleafSystems\ApiWrappers\Base\ConnectionConsumer;
-use FernleafSystems\ApiWrappers\Freeagent\Entities\BankTransactions\BankTransactionVO;
-use FernleafSystems\ApiWrappers\Freeagent\Entities\BankTransactions\Create;
-use FernleafSystems\Integrations\Freeagent\Consumers\BankAccountVoConsumer;
-use FernleafSystems\Integrations\Freeagent\Consumers\PayoutVoConsumer;
+use FernleafSystems\ApiWrappers\Freeagent\Entities;
+use FernleafSystems\Integrations\Freeagent\Consumers;
 
 /**
  * Class CreateForPayout
@@ -14,18 +12,17 @@ use FernleafSystems\Integrations\Freeagent\Consumers\PayoutVoConsumer;
  */
 class CreateForPayout {
 
-	use BankAccountVoConsumer,
-		ConnectionConsumer,
-		PayoutVoConsumer;
+	use Consumers\BankAccountVoConsumer,
+		Consumers\PayoutVoConsumer,
+		ConnectionConsumer;
 
 	/**
-	 * @return BankTransactionVO|null
+	 * @return Entities\BankTransactions\BankTransactionVO|null
 	 * @throws \Exception
 	 */
 	public function create() {
 		$oPayout = $this->getPayoutVO();
-		/** @var BankTransactionVO $oBankTxn */
-		$bSuccess = ( new Create() )
+		$bSuccess = ( new Entities\BankTransactions\Create() )
 			->setConnection( $this->getConnection() )
 			->create(
 				$this->getBankAccountVo(),
