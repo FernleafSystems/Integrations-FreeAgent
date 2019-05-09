@@ -27,29 +27,28 @@ class VerifyFreeagentConfig {
 
 		$bValid = !empty( $oCompany );
 
-		$nStripeContactID = $oFreeAgentConfig->getContactId();
-		$bValid = $bValid && ( $nStripeContactID > 0 ) &&
+		$bValid = $bValid && ( $oFreeAgentConfig->contact_id > 0 ) &&
 				  ( new Entities\Contacts\Retrieve() )
 					  ->setConnection( $oCon )
-					  ->setEntityId( $oFreeAgentConfig->getContactId() )
+					  ->setEntityId( $oFreeAgentConfig->contact_id )
 					  ->exists();
 
 		if ( $bValid ) {
 			$nApiUserPermissionLevel = ( new Entities\Users\RetrieveMe() )
 				->setConnection( $oCon )
 				->retrieve()
-				->getPermissionLevel();
+				->permission_level;
 			$bValid = ( $nApiUserPermissionLevel >= 6 ); // at least Banking level
 		}
 
 		$bValid = $bValid && ( new Entities\Categories\Retrieve() )
 				->setConnection( $oCon )
-				->setEntityId( $oFreeAgentConfig->getInvoiceItemCategoryId() )
+				->setEntityId( $oFreeAgentConfig->invoice_item_cat_id )
 				->exists();
 
 		$bValid = $bValid && ( new Entities\Categories\Retrieve() )
 				->setConnection( $oCon )
-				->setEntityId( $oFreeAgentConfig->getBillCategoryId() )
+				->setEntityId( $oFreeAgentConfig->bill_cat_id )
 				->exists();
 
 		$oBankAccountRetriever = ( new Entities\BankAccounts\Retrieve() )
@@ -60,14 +59,13 @@ class VerifyFreeagentConfig {
 					->setEntityId( $nId )
 					->retrieve();
 				$bValid = $bValid && !is_null( $oBankAccount ) &&
-						  strcasecmp( $sCurrency, $oBankAccount->getCurrency() ) == 0;
+						  strcasecmp( $sCurrency, $oBankAccount->currency ) == 0;
 			}
 		}
 
-		$nForeignCurrencyId = $oFreeAgentConfig->getBankAccountIdForeignCurrencyTransfer();
-		if ( $bValid && $nForeignCurrencyId > 0 ) {
+		if ( $bValid && $oFreeAgentConfig->bank_account_id_foreign > 0 ) {
 			$bValid = $oBankAccountRetriever
-				->setEntityId( $nForeignCurrencyId )
+				->setEntityId( $oFreeAgentConfig->bank_account_id_foreign )
 				->exists();
 		}
 
@@ -75,7 +73,7 @@ class VerifyFreeagentConfig {
 			$sBaseAccountCurrency = ( new Entities\Company\Retrieve() )
 				->setConnection( $oCon )
 				->retrieve()
-				->getCurrency();
+				->currency;
 			$bValid = $oFreeAgentConfig->getBankAccountIdForCurrency( $sBaseAccountCurrency ) > 0;
 		}
 

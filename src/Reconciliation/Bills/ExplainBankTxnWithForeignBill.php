@@ -27,7 +27,7 @@ class ExplainBankTxnWithForeignBill {
 	public function createExplanation( $oBill ) {
 		$oBankTransferExplTxn = $this->createAccountTransferExplanation( $oBill );
 		$oLinkedTxn = $this->getNewLinkedBankTransferTransaction( $oBankTransferExplTxn );
-		$oUpdatedBill = $this->updateBillWithNewValue( $oBill, $oLinkedTxn->getAmountTotal() );
+		$oUpdatedBill = $this->updateBillWithNewValue( $oBill, $oLinkedTxn->amount );
 		$this->createBillExplanation( $oUpdatedBill );
 		return true;
 	}
@@ -42,8 +42,8 @@ class ExplainBankTxnWithForeignBill {
 			->setConnection( $this->getConnection() )
 			->setBankAccount( $this->getBankAccountVo() )
 			->setBillPaid( $oBill )
-			->setValue( $oBill->getAmountTotal() )
-			->setDatedOn( $oBill->getDatedOn() )
+			->setValue( $oBill->total_value )
+			->setDatedOn( $oBill->dated_on )
 			->create();
 		if ( empty( $oExplanation ) ) {
 			throw new \Exception( 'Creation of final foreign bill for Stripe failed' );
@@ -62,7 +62,7 @@ class ExplainBankTxnWithForeignBill {
 			->setConnection( $this->getConnection() )
 			->setBankTxn( $this->getBankTransactionVo() )
 			->setTargetBankAccount( $this->getBankAccountVo() )
-			->setValue( -1*$oBill->getAmountTotal() )// -1 as it's leaving the account
+			->setValue( -1*$oBill->total_value )// -1 as it's leaving the account
 			->create();
 		if ( empty( $oBankTransferExplanationTxn ) ) {
 			throw new \Exception( 'Failed to explain bank transfer transaction in FreeAgent.' );

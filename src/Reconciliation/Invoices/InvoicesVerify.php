@@ -41,7 +41,7 @@ class InvoicesVerify {
 		// Verify FreeAgent Invoice exists for each Stripe Balance Transaction
 		// that is represented in the Payout.
 		$nTxnCount = 0;
-		$aInvoicesToReconcile = array();
+		$aInvoicesToReconcile = [];
 		foreach ( $oPayout->getCharges() as $oCharge ) {
 
 			$oInvoiceToReconcile = null;
@@ -95,11 +95,20 @@ class InvoicesVerify {
 	 */
 	protected function getFreeagentInvoicesPool() {
 		if ( !isset( $this->aFreeagentInvoices ) ) {
-			$this->aFreeagentInvoices = ( new Entities\Invoices\Find() )
-				->setConnection( $this->getConnection() )
-				->filterByOpenOverdue()
-				->filterByLastXMonths( 1 )
-				->all();
+//			$this->aFreeagentInvoices = ( new Entities\Invoices\Find() )
+//				->setConnection( $this->getConnection() )
+//				->filterByOpenOverdue()
+//				->filterByLastXMonths( 1 )
+//				->all();
+
+			$oInvIt = new Entities\Invoices\InvoicesIterator();
+			$oInvIt->setConnection( $this->getConnection() )
+				   ->filterByOpenOverdue()
+				   ->filterByLastXMonths( 1 );
+			$this->aFreeagentInvoices = [];
+			foreach ( $oInvIt as $oInv ) {
+				$this->aFreeagentInvoices[] = $oInv;
+			}
 		}
 		return $this->aFreeagentInvoices;
 	}
