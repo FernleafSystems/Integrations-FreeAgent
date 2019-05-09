@@ -4,17 +4,15 @@ namespace FernleafSystems\Integrations\Freeagent\Reconciliation\Invoices;
 
 use FernleafSystems\ApiWrappers\Base\ConnectionConsumer;
 use FernleafSystems\ApiWrappers\Freeagent\Entities;
-use FernleafSystems\Integrations\Freeagent\Consumers\BankTransactionVoConsumer;
-use FernleafSystems\Integrations\Freeagent\Consumers\BridgeConsumer;
-use FernleafSystems\Integrations\Freeagent\Consumers\PayoutVoConsumer;
+use FernleafSystems\Integrations\Freeagent\Consumers;
 use FernleafSystems\Integrations\Freeagent\Lookups\CurrencyExchangeRates;
 
 class ExplainBankTxnWithInvoices {
 
-	use BankTransactionVoConsumer,
-		BridgeConsumer,
-		ConnectionConsumer,
-		PayoutVoConsumer;
+	use ConnectionConsumer,
+		Consumers\BankTransactionVoConsumer,
+		Consumers\BridgeConsumer,
+		Consumers\PayoutVoConsumer;
 
 	/**
 	 * @param InvoicesPartsToReconcileVO[] $aInvoicesToReconcile
@@ -31,10 +29,10 @@ class ExplainBankTxnWithInvoices {
 		/** @var Entities\BankAccounts\BankAccountVO $oBankAccount */
 		foreach ( $aInvoicesToReconcile as $oInvoiceItem ) {
 
-			$oInvoice = $oInvoiceItem->getFreeagentInvoice();
-			$oCharge = $oInvoiceItem->getCharge();
+			$oInvoice = $oInvoiceItem->external_invoice;
+			$oCharge = $oInvoiceItem->charge;
 
-			if ( (int)$oInvoice->getValueDue() == 0 ) {
+			if ( (int)$oInvoice->due_value == 0 ) {
 				continue;
 			}
 
@@ -43,18 +41,18 @@ class ExplainBankTxnWithInvoices {
 					->setConnection( $oConn )
 					->setBankTxn( $oBankTxn )
 					->setInvoicePaid( $oInvoice )
-					->setDatedOn( $sPayoutDatedOn ) // also consider: $oInvoice->getDatedOn()
-					->setValue( (string)$oInvoice->getValueGross() );
+					->setDatedOn( $sPayoutDatedOn )// also consider: $oInvoice->getDatedOn()
+					->setValue( (string)$oInvoice->total_value );
 
 				$sChargeCurrency = $oCharge->getCurrency();
 				// e.g. we're explaining a USD invoice using a transaction in GBP bank account
 				if ( strcasecmp( $sChargeCurrency, $oPayout->getCurrency() ) != 0 ) { //foreign currency converted by Stripe
-					$oCreator->setForeignCurrencyValue( $oInvoice->getValueGross() );
+					$oCreator->setForeignCurrencyValue( $oInvoice->total_value );
 				}
 				else {
 					// We do some optimisation with unrealised currency gains/losses.
 					try {
-						$nInvoiceDateRate = $oCurrencyEx->lookup( $sBaseCurrency, $sChargeCurrency, $oInvoice->getDatedOn() );
+						$nInvoiceDateRate = $oCurrencyEx->lookup( $sBaseCurrency, $sChargeCurrency, $oInvoice->dated_on );
 						$nPayoutDateRate = $oCurrencyEx->lookup( $sBaseCurrency, $sChargeCurrency, $sPayoutDatedOn );
 
 						// if the target currency got stronger we'd have unrealised gains, so we negate
@@ -99,6 +97,6 @@ class ExplainBankTxnWithInvoices {
 		return ( new Entities\Company\Retrieve() )
 			->setConnection( $this->getConnection() )
 			->retrieve()
-			->getCurrency();
+			->currency;
 	}
 }

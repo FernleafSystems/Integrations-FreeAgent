@@ -82,8 +82,7 @@ class ExplainBankTxnWithStripeBill {
 	protected function getForeignCurrencyBankAccount() {
 		$oForeignBankAccount = null;
 
-		$nForeignBankAccountId = $this->getFreeagentConfigVO()
-									  ->getBankAccountIdForeignCurrencyTransfer();
+		$nForeignBankAccountId = $this->getFreeagentConfigVO()->bank_account_id_foreign;
 		if ( !empty( $nForeignBankAccountId ) ) { // we retrieve it even though it may not be needed
 			$oForeignBankAccount = ( new Entities\BankAccounts\Retrieve() )
 				->setConnection( $this->getConnection() )

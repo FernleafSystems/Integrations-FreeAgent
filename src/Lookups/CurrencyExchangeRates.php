@@ -74,10 +74,10 @@ class CurrencyExchangeRates {
 		$aCache = $this->getLookupCache();
 
 		if ( !isset( $aCache[ $sBase ] ) ) {
-			$aCache[ $sBase ] = array();
+			$aCache[ $sBase ] = [];
 		}
 		if ( !isset( $aCache[ $sBase ][ $sTarget ] ) ) {
-			$aCache[ $sBase ][ $sTarget ] = array();
+			$aCache[ $sBase ][ $sTarget ] = [];
 		}
 		$aCache[ $sBase ][ $sTarget ][ $sDate ] = $nRate;
 
@@ -99,7 +99,7 @@ class CurrencyExchangeRates {
 	 */
 	public function getLookupCache() {
 		if ( !is_array( $this->aLookupCache ) ) {
-			$this->aLookupCache = array();
+			$this->aLookupCache = [];
 		}
 		return $this->aLookupCache;
 	}

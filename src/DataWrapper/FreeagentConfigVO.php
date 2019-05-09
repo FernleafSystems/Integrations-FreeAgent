@@ -7,6 +7,15 @@ use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
 /**
  * Class FreeagentConfigVO
  * @package FernleafSystems\Integrations\Freeagent\DataWrapper
+ * @property int  $bank_account_id_foreign
+ * @property int  $bank_account_id_gbp
+ * @property int  $bank_account_id_eur
+ * @property int  $bank_account_id_usd
+ * @property int  $invoice_item_cat_id
+ * @property int  $bill_cat_id
+ * @property int  $contact_id            - for payment process bills, such as Stripe / PayPal
+ * @property bool $auto_create_bank_txn
+ * @property bool $auto_locate_bank_txn
  */
 class FreeagentConfigVO {
 
@@ -17,7 +26,7 @@ class FreeagentConfigVO {
 	 * @return array
 	 */
 	public function getAllBankAccounts() {
-		$aAccounts = array();
+		$aAccounts = [];
 
 		foreach ( $this->getRawDataAsArray() as $sKey => $mValue ) {
 			if ( preg_match( '#^bank_account_id_[a-z]{3}$#i', $sKey ) ) {
@@ -30,79 +39,90 @@ class FreeagentConfigVO {
 	}
 
 	/**
-	 * @return int
-	 */
-	public function getBankAccountIdEur() {
-		return $this->getBankAccountIdForCurrency( 'eur' );
-	}
-
-	/**
-	 * @return int
-	 */
-	public function getBankAccountIdGbp() {
-		return $this->getBankAccountIdForCurrency( 'gbp' );
-	}
-
-	/**
-	 * @return int
-	 */
-	public function getBankAccountIdUsd() {
-		return $this->getBankAccountIdForCurrency( 'usd' );
-	}
-
-	/**
 	 * @param string $sCurrency
 	 * @return int
 	 */
 	public function getBankAccountIdForCurrency( $sCurrency ) {
-		return $this->getNumericParam( 'bank_account_id_'.strtolower( $sCurrency ) );
+		$sParam = 'bank_account_id_'.strtolower( $sCurrency );
+		return $this->{$sParam};
 	}
 
 	/**
 	 * @return int
+	 * @deprecated
+	 */
+	public function getBankAccountIdEur() {
+		return $this->bank_account_id_eur;
+	}
+
+	/**
+	 * @return int
+	 * @deprecated
+	 */
+	public function getBankAccountIdGbp() {
+		return $this->bank_account_id_gbp;
+	}
+
+	/**
+	 * @return int
+	 * @deprecated
+	 */
+	public function getBankAccountIdUsd() {
+		return $this->bank_account_id_usd;
+	}
+
+	/**
+	 * @return int
+	 * @deprecated
 	 */
 	public function getBankAccountIdForeignCurrencyTransfer() {
-		return $this->getNumericParam( 'bank_account_id_foreign' );
+		return $this->bank_account_id_foreign;
 	}
 
 	/**
 	 * @return int
+	 * @deprecated
 	 */
 	public function getInvoiceItemCategoryId() {
-		return $this->getNumericParam( 'invoice_item_cat_id' );
+		return $this->invoice_item_cat_id;
 	}
 
 	/**
 	 * @return int
+	 * @deprecated
 	 */
 	public function getBillCategoryId() {
-		return $this->getNumericParam( 'bill_cat_id' );
+		return $this->bill_cat_id;
 	}
 
 	/**
 	 * @return int
+	 * @deprecated
 	 */
 	public function getContactId() {
-		return $this->getNumericParam( 'contact_id' );
+		return $this->contact_id;
 	}
 
 	/**
 	 * @return bool
+	 * @deprecated
 	 */
 	public function isAutoCreateBankTransactions() {
-		return (bool)$this->getParam( 'auto_create_bank_txn' );
+		return $this->auto_create_bank_txn;
 	}
 
 	/**
 	 * @return bool
+	 * @deprecated
 	 */
 	public function isAutoLocateBankTransactions() {
-		return (bool)$this->getParam( 'auto_locate_bank_txn' );
+		return $this->auto_locate_bank_txn;
 	}
 
 	/**
 	 * @param int $nVal
 	 * @return $this
+	 * @deprecated
 	 */
 	public function setBankAccountIdEur( $nVal ) {
 		return $this->setParam( 'bank_account_id_eur', $nVal );
@@ -111,6 +131,7 @@ class FreeagentConfigVO {
 	/**
 	 * @param int $nVal
 	 * @return $this
+	 * @deprecated
 	 */
 	public function setBankAccountIdGbp( $nVal ) {
 		return $this->setParam( 'bank_account_id_gbp', $nVal );
@@ -119,6 +140,7 @@ class FreeagentConfigVO {
 	/**
 	 * @param int $nVal
 	 * @return $this
+	 * @deprecated
 	 */
 	public function setBankAccountIdUsd( $nVal ) {
 		return $this->setParam( 'bank_account_id_usd', $nVal );
@@ -128,6 +150,7 @@ class FreeagentConfigVO {
 	 * @param string $sCurrency
 	 * @param int    $nVal
 	 * @return $this
+	 * @deprecated
 	 */
 	public function setBankAccountIdForCurrency( $sCurrency, $nVal ) {
 		return $this->setParam( 'bank_account_id_'.strtolower( $sCurrency ), $nVal );
@@ -136,6 +159,7 @@ class FreeagentConfigVO {
 	/**
 	 * @param int $nVal
 	 * @return $this
+	 * @deprecated
 	 */
 	public function setBankAccountIdForeignCurrencyTransfer( $nVal ) {
 		return $this->setParam( 'bank_account_id_foreign', $nVal );
@@ -144,6 +168,7 @@ class FreeagentConfigVO {
 	/**
 	 * @param int $nVal
 	 * @return $this
+	 * @deprecated
 	 */
 	public function setBillCategoryId( $nVal ) {
 		return $this->setParam( 'bill_cat_id', $nVal );
@@ -152,6 +177,7 @@ class FreeagentConfigVO {
 	/**
 	 * @param int $nVal
 	 * @return $this
+	 * @deprecated
 	 */
 	public function setBillContactId( $nVal ) {
 		return $this->setParam( 'contact_id', $nVal );
@@ -160,6 +186,7 @@ class FreeagentConfigVO {
 	/**
 	 * @param int $nVal
 	 * @return $this
+	 * @deprecated
 	 */
 	public function setInvoiceItemCategoryId( $nVal ) {
 		return $this->setParam( 'invoice_item_cat_id', $nVal );
@@ -168,6 +195,7 @@ class FreeagentConfigVO {
 	/**
 	 * @param bool $bAutoCreate
 	 * @return $this
+	 * @deprecated
 	 */
 	public function setIsAutoCreateBankTransactions( $bAutoCreate = true ) {
 		return $this->setParam( 'auto_create_bank_txn', $bAutoCreate );
@@ -176,6 +204,7 @@ class FreeagentConfigVO {
 	/**
 	 * @param bool $bAutoLocate
 	 * @return $this
+	 * @deprecated
 	 */
 	public function setIsAutoLocateBankTxns( $bAutoLocate = true ) {
 		return $this->setParam( 'auto_locate_bank_txn', $bAutoLocate );

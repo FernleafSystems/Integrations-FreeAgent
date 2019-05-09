@@ -57,14 +57,14 @@ class ProcessPayout {
 		}
 
 		// Find/Create the Freeagent Bank Transaction
-		if ( empty( $oBankTxn ) && $oFreeagentConfig->isAutoLocateBankTransactions() ) {
+		if ( empty( $oBankTxn ) && $oFreeagentConfig->auto_locate_bank_txn ) {
 			$oBankTxn = ( new Reconciliation\BankTransactions\FindForPayout() )
 				->setConnection( $oCon )
 				->setPayoutVO( $oPayout )
 				->setBankAccountVo( $oBankAccount )
 				->find();
 		}
-		if ( empty( $oBankTxn ) && $oFreeagentConfig->isAutoCreateBankTransactions() ) {
+		if ( empty( $oBankTxn ) && $oFreeagentConfig->auto_create_bank_txn ) {
 			$oBankTxn = ( new Reconciliation\BankTransactions\CreateForPayout() )
 				->setConnection( $oCon )
 				->setPayoutVO( $oPayout )
