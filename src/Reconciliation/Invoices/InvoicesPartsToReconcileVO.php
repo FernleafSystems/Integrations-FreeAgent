@@ -9,6 +9,8 @@ use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
 /**
  * Class InvoicesPartsToReconcileVO
  * @package FernleafSystems\Integrations\Freeagent\Reconciliation\Invoices
+ * @property InvoiceVO $external_invoice
+ * @property ChargeVO  $charge
  */
 class InvoicesPartsToReconcileVO {
 
@@ -16,16 +18,18 @@ class InvoicesPartsToReconcileVO {
 
 	/**
 	 * @return InvoiceVO
+	 * @deprecated
 	 */
 	public function getFreeagentInvoice() {
-		return $this->getParam( 'external_invoice' );
+		return $this->external_invoice;
 	}
 
 	/**
 	 * @return ChargeVO
+	 * @deprecated
 	 */
 	public function getCharge() {
-		return $this->getParam( 'charge' );
+		return $this->charge;
 	}
 
 	/**
@@ -33,7 +37,8 @@ class InvoicesPartsToReconcileVO {
 	 * @return $this
 	 */
 	public function setFreeagentInvoice( $oInvoice ) {
-		return $this->setParam( 'external_invoice', $oInvoice );
+		$this->external_invoice = $oInvoice;
+		return $this;
 	}
 
 	/**
@@ -41,6 +46,7 @@ class InvoicesPartsToReconcileVO {
 	 * @return $this
 	 */
 	public function setChargeVo( $oBalTxn ) {
-		return $this->setParam( 'charge', $oBalTxn );
+		$this->charge = $oBalTxn;
+		return $this;
 	}
 }

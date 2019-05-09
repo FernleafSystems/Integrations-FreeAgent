@@ -7,6 +7,9 @@ use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
 /**
  * Class PayoutVO
  * @package FernleafSystems\Integrations\Freeagent\DataWrapper
+ * @property string $id
+ * @property string $gateway
+ * @property string $item_name
  */
 class ChargeVO {
 
@@ -57,23 +60,26 @@ class ChargeVO {
 
 	/**
 	 * @return string
+	 * @deprecated
 	 */
 	public function getGateway() {
-		return $this->getStringParam( 'gateway' );
+		return $this->gateway;
 	}
 
 	/**
 	 * @return string
+	 * @deprecated
 	 */
 	public function getId() {
-		return $this->getStringParam( 'id' );
+		return $this->id;
 	}
 
 	/**
 	 * @return string
+	 * @deprecated
 	 */
 	public function getItemName() {
-		return $this->getStringParam( 'item_name' );
+		return $this->item_name;
 	}
 
 	/**

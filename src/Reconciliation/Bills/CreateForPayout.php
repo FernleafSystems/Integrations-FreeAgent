@@ -28,18 +28,18 @@ class CreateForPayout {
 
 		$oBillContact = ( new Entities\Contacts\Retrieve() )
 			->setConnection( $this->getConnection() )
-			->setEntityId( $oFaConfig->getContactId() )
+			->setEntityId( $oFaConfig->contact_id )
 			->retrieve();
 		if ( empty( $oBillContact ) ) {
-			throw new \Exception( sprintf( 'Failed to load FreeAgent Contact bill for Stripe with ID "%s" ', $oFaConfig->getContactId() ) );
+			throw new \Exception( sprintf( 'Failed to load FreeAgent Contact bill for Payment processor with ID "%s" ', $oFaConfig->contact_id ) );
 		}
 
-		$aComments = array(
+		$aComments = [
 			sprintf( 'Bill for Payout: %s', $oPayout->getId() ),
 			sprintf( 'Payout Gross Amount: %s %s', $oPayout->getCurrency(), $oPayout->getTotalGross() ),
 			sprintf( 'Payout Fees Total: %s %s', $oPayout->getCurrency(), $nTotalFees ),
 			sprintf( 'Payout Net Amount: %s %s', $oPayout->getCurrency(), round( $oPayout->getTotalNet(), 2 ) )
-		);
+		];
 
 		$oBillCreator = ( new Entities\Bills\Create() )
 			->setConnection( $this->getConnection() )
@@ -47,7 +47,7 @@ class CreateForPayout {
 			->setReference( $oPayout->getId() )
 			->setDatedOn( $oPayout->getDateArrival() )
 			->setDueOn( $oPayout->getDateArrival() )
-			->setCategoryId( $this->getFreeagentConfigVO()->getBillCategoryId() )
+			->setCategoryId( $this->getFreeagentConfigVO()->bill_cat_id )
 			->setComment( implode( "\n", $aComments ) )
 			->setTotalValue( $nTotalFees )
 			->setSalesTaxRate( 0 );
@@ -79,7 +79,7 @@ class CreateForPayout {
 	 * @return string[]
 	 */
 	private function getEuCountries() {
-		return array(
+		return [
 			'Austria',
 			'Belgium',
 			'Bulgaria',
@@ -108,6 +108,6 @@ class CreateForPayout {
 			'Slovenia',
 			'Spain',
 			'Sweden'
-		);
+		];
 	}
 }
