@@ -4,7 +4,7 @@ namespace FernleafSystems\Integrations\Freeagent\Verify;
 
 use FernleafSystems\ApiWrappers\Base\ConnectionConsumer;
 use FernleafSystems\ApiWrappers\Freeagent\Entities;
-use FernleafSystems\Integrations\Freeagent\DataWrapper\FreeagentConfigVO;
+use FernleafSystems\Integrations\Freeagent;
 
 /**
  * Class VerifyFreeagentConfig
@@ -12,71 +12,91 @@ use FernleafSystems\Integrations\Freeagent\DataWrapper\FreeagentConfigVO;
  */
 class VerifyFreeagentConfig {
 
-	use ConnectionConsumer;
+	use ConnectionConsumer,
+		Freeagent\Consumers\FreeagentConfigVoConsumer;
 
 	/**
-	 * @param FreeagentConfigVO $oFreeAgentConfig
 	 * @return bool
+	 * @throws \Exception
 	 */
-	public function verify( $oFreeAgentConfig ) {
+	public function runVerify() {
 		$oCon = $this->getConnection();
+		$oFAConf = $this->getFreeagentConfigVO();
 
-		$oCompany = ( new Entities\Company\Retrieve() )
-			->setConnection( $oCon )
-			->retrieve();
-
-		$bValid = !empty( $oCompany );
-
-		$bValid = $bValid && ( $oFreeAgentConfig->contact_id > 0 ) &&
-				  ( new Entities\Contacts\Retrieve() )
-					  ->setConnection( $oCon )
-					  ->setEntityId( $oFreeAgentConfig->contact_id )
-					  ->exists();
-
-		if ( $bValid ) {
-			$nApiUserPermissionLevel = ( new Entities\Users\RetrieveMe() )
-				->setConnection( $oCon )
-				->retrieve()
-				->permission_level;
-			$bValid = ( $nApiUserPermissionLevel >= 6 ); // at least Banking level
+		$oCoRetr = ( new Entities\Company\Retrieve() )->setConnection( $oCon );
+		$oCompany = $oCoRetr->send();
+		if ( empty( $oCompany ) ) {
+			throw new \Exception( 'Company could not be retrieved: '.var_export( $oCoRetr->getLastErrorContent(), true ) );
+		}
+		else if ( $oFAConf->getBankAccountIdForCurrency( $oCompany->currency ) < 1 ) {
+			throw new \Exception( 'Bank Account for native company currency is not valid.' );
 		}
 
-		$bValid = $bValid && ( new Entities\Categories\Retrieve() )
-				->setConnection( $oCon )
-				->setEntityId( $oFreeAgentConfig->invoice_item_cat_id )
-				->exists();
+		$oContactVerifier = ( new Entities\Contacts\Retrieve() )
+			->setConnection( $oCon )
+			->setEntityId( $oFAConf->contact_id );
+		if ( empty( $oFAConf->contact_id ) || !$oContactVerifier->exists() ) {
+			throw new \Exception( sprintf( 'Contact ID for bills could not be verified: "%s"', $oFAConf->contact_id ) );
+		}
 
-		$bValid = $bValid && ( new Entities\Categories\Retrieve() )
-				->setConnection( $oCon )
-				->setEntityId( $oFreeAgentConfig->bill_cat_id )
-				->exists();
+		$oUser = ( new Entities\Users\RetrieveMe() )
+			->setConnection( $oCon )
+			->retrieve();
+		if ( empty( $oUser ) || $oUser->permission_level < 6 ) {
+			throw new \Exception( 'User permissions are not valid.' );
+		}
+
+		$bCatExists = ( new Entities\Categories\Retrieve() )
+			->setConnection( $oCon )
+			->setEntityId( $oFAConf->invoice_item_cat_id )
+			->exists();
+		if ( !$bCatExists ) {
+			throw new \Exception( sprintf( 'Invoice item category does not exist: "%s"', $oFAConf->invoice_item_cat_id ) );
+		}
+
+		$bCatExists = ( new Entities\Categories\Retrieve() )
+			->setConnection( $oCon )
+			->setEntityId( $oFAConf->bill_cat_id )
+			->exists();
+		if ( !$bCatExists ) {
+			throw new \Exception( sprintf( 'Bill category does not exist: "%s"', $oFAConf->bill_cat_id ) );
+		}
 
 		$oBankAccountRetriever = ( new Entities\BankAccounts\Retrieve() )
 			->setConnection( $oCon );
-		if ( $bValid ) {
-			foreach ( $oFreeAgentConfig->getAllBankAccounts() as $sCurrency => $nId ) {
-				$oBankAccount = $oBankAccountRetriever
-					->setEntityId( $nId )
-					->retrieve();
-				$bValid = $bValid && !is_null( $oBankAccount ) &&
-						  strcasecmp( $sCurrency, $oBankAccount->currency ) == 0;
+		foreach ( $oFAConf->getAllBankAccounts() as $sCurrency => $nId ) {
+			$oBankAccount = $oBankAccountRetriever
+				->setEntityId( $nId )
+				->retrieve();
+			if ( empty( $oBankAccount ) || strcasecmp( $sCurrency, $oBankAccount->currency ) != 0 ) {
+				throw new \Exception( sprintf( 'Back account is not valid for currency: "%s" "%s"', $nId, $sCurrency ) );
 			}
 		}
 
-		if ( $bValid && $oFreeAgentConfig->bank_account_id_foreign > 0 ) {
-			$bValid = $oBankAccountRetriever
-				->setEntityId( $oFreeAgentConfig->bank_account_id_foreign )
+		if ( $oFAConf->bank_account_id_foreign > 0 ) {
+			$bForeignBankExists = $oBankAccountRetriever
+				->setEntityId( $oFAConf->bank_account_id_foreign )
 				->exists();
+			if ( !$bForeignBankExists ) {
+				throw new \Exception( sprintf( 'Back account does not exist: "%s"', $oFAConf->bank_account_id_foreign ) );
+			}
 		}
 
-		if ( $bValid ) {
-			$sBaseAccountCurrency = ( new Entities\Company\Retrieve() )
-				->setConnection( $oCon )
-				->retrieve()
-				->currency;
-			$bValid = $oFreeAgentConfig->getBankAccountIdForCurrency( $sBaseAccountCurrency ) > 0;
-		}
+		return true;
+	}
 
+	/**
+	 * @param Freeagent\DataWrapper\FreeagentConfigVO $oFreeAgentConfig
+	 * @return bool
+	 */
+	public function verify( Freeagent\DataWrapper\FreeagentConfigVO $oFreeAgentConfig ) {
+		try {
+			$bValid = $this->setFreeagentConfigVO( $oFreeAgentConfig )
+						   ->runVerify();
+		}
+		catch ( \Exception $oE ) {
+			$bValid = false;
+		}
 		return $bValid;
 	}
 }
