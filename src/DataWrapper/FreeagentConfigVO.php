@@ -19,7 +19,29 @@ use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
  */
 class FreeagentConfigVO {
 
-	use StdClassAdapter;
+	use StdClassAdapter {
+		__get as __adapterGet;
+		__set as __adapterSet;
+	}
+
+	/**
+	 * @param string $sProperty
+	 * @return mixed
+	 */
+	public function __get( $sProperty ) {
+
+		$mVal = $this->__adapterGet( $sProperty );
+
+		switch ( $sProperty ) {
+			case 'invoice_item_cat_id':
+				$mVal = str_pad( $mVal, '3', '0', STR_PAD_LEFT );
+				break;
+			default:
+				break;
+		}
+
+		return $mVal;
+	}
 
 	/**
 	 * Where the key is the ISO3 code for currency and the value is the bank account ID
