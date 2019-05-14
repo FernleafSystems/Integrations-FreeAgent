@@ -24,9 +24,9 @@ class VerifyFreeagentConfig {
 		$oFAConf = $this->getFreeagentConfigVO();
 
 		$oCoRetr = ( new Entities\Company\Retrieve() )->setConnection( $oCon );
-		$oCompany = $oCoRetr->send();
+		$oCompany = $oCoRetr->retrieve();
 		if ( empty( $oCompany ) ) {
-			throw new \Exception( 'Company could not be retrieved: '.var_export( $oCoRetr->getLastErrorContent(), true ) );
+			throw new \Exception( 'Company could not be retrieved.' );
 		}
 		else if ( $oFAConf->getBankAccountIdForCurrency( $oCompany->currency ) < 1 ) {
 			throw new \Exception( 'Bank Account for native company currency is not valid.' );
@@ -86,13 +86,11 @@ class VerifyFreeagentConfig {
 	}
 
 	/**
-	 * @param Freeagent\DataWrapper\FreeagentConfigVO $oFreeAgentConfig
 	 * @return bool
 	 */
-	public function verify( Freeagent\DataWrapper\FreeagentConfigVO $oFreeAgentConfig ) {
+	public function verify() {
 		try {
-			$bValid = $this->setFreeagentConfigVO( $oFreeAgentConfig )
-						   ->runVerify();
+			$bValid = $this->runVerify();
 		}
 		catch ( \Exception $oE ) {
 			$bValid = false;
