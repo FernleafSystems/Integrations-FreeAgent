@@ -120,16 +120,14 @@ class PayoutVO {
 	 * @return float
 	 */
 	public function getTotalGross() {
-		return $this->getChargeTotalTally( 'amount_gross' )
-			   + $this->getRefundTotalTally( 'amount_gross' );
+		return bcadd( $this->getChargeTotalTally( 'amount_gross' ), $this->getRefundTotalTally( 'amount_gross' ), 2 );
 	}
 
 	/**
 	 * @return float
 	 */
 	public function getTotalFee() {
-		return $this->getChargeTotalTally( 'amount_fee' )
-			   + $this->getRefundTotalTally( 'amount_fee' );
+		return bcadd( $this->getChargeTotalTally( 'amount_fee' ), $this->getRefundTotalTally( 'amount_fee' ), 2 );
 	}
 
 	/**
@@ -147,7 +145,7 @@ class PayoutVO {
 	protected function getChargeTotalTally( $sKey ) {
 		$nTotal = 0;
 		foreach ( $this->getCharges() as $oCh ) {
-			$nTotal += $oCh->{$sKey};
+			$nTotal = bcadd( $nTotal, $oCh->{$sKey}, 2 );
 		}
 		return $nTotal;
 	}
@@ -159,7 +157,7 @@ class PayoutVO {
 	protected function getRefundTotalTally( $sKey ) {
 		$nTotal = 0;
 		foreach ( $this->getRefunds() as $oR ) {
-			$nTotal += $oR->{$sKey};
+			$nTotal = bcadd( $nTotal, $oR->{$sKey}, 2 );
 		}
 		return $nTotal;
 	}
