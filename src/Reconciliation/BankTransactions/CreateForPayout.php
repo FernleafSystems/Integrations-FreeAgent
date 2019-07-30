@@ -26,10 +26,10 @@ class CreateForPayout {
 			->setConnection( $this->getConnection() )
 			->create(
 				$this->getBankAccountVo(),
-				$oPayout->getDateArrival(),
+				$oPayout->date_arrival,
 				$oPayout->getTotalNet(),//$oPayout->amount/100
 				sprintf( 'Automatically create bank transaction for %s Payout %s',
-					$oPayout->getGateway(), $oPayout->getId() )
+					$oPayout->gateway, $oPayout->id )
 			);
 
 		$oBankTxn = null;
