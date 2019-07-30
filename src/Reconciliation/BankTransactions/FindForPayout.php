@@ -25,7 +25,7 @@ class FindForPayout {
 	public function find() {
 		return ( new Entities\BankTransactions\Finder() )
 			->setConnection( $this->getConnection() )
-			->filterByDateRange( $this->getPayoutVO()->getDateArrival(), 1 )
+			->filterByDateRange( $this->getPayoutVO()->date_arrival, 1 )
 			->filterByBankAccount( $this->getBankAccountVo() )
 			->filterByUnexplained()
 			->byAmount( $this->getPayoutVO()->getTotalNet() );

@@ -35,7 +35,7 @@ class CreateForPayout {
 		}
 
 		$aComments = [
-			sprintf( 'Bill for Payout: %s', $oPayout->getId() ),
+			sprintf( 'Bill for Payout: %s', $oPayout->id ),
 			sprintf( 'Payout Gross Amount: %s %s', $oPayout->getCurrency(), $oPayout->getTotalGross() ),
 			sprintf( 'Payout Fees Total: %s %s', $oPayout->getCurrency(), $nTotalFees ),
 			sprintf( 'Payout Net Amount: %s %s', $oPayout->getCurrency(), round( $oPayout->getTotalNet(), 2 ) )
@@ -44,9 +44,9 @@ class CreateForPayout {
 		$oBillCreator = ( new Entities\Bills\Create() )
 			->setConnection( $this->getConnection() )
 			->setContact( $oBillContact )
-			->setReference( $oPayout->getId() )
-			->setDatedOn( $oPayout->getDateArrival() )
-			->setDueOn( $oPayout->getDateArrival() )
+			->setReference( $oPayout->id )
+			->setDatedOn( $oPayout->date_arrival )
+			->setDueOn( $oPayout->date_arrival )
 			->setCategoryId( $this->getFreeagentConfigVO()->bill_cat_id )
 			->setComment( implode( "\n", $aComments ) )
 			->setTotalValue( $nTotalFees )
@@ -61,7 +61,7 @@ class CreateForPayout {
 
 		if ( empty( $oBill ) || empty( $oBill->getId() ) ) {
 			throw new \Exception( sprintf( 'Failed to create FreeAgent bill for Payout ID %s: %s ',
-				$oPayout->getId(), $oBillCreator->getLastErrorContent() ) );
+				$oPayout->id, $oBillCreator->getLastErrorContent() ) );
 		}
 
 		return $oBill;

@@ -73,7 +73,7 @@ class ProcessPayout {
 		}
 
 		if ( empty( $oBankTxn ) ) {
-			throw new \Exception( sprintf( 'Bank Transaction does not exist for this Payout "%s".', $oPayout->getId() ) );
+			throw new \Exception( sprintf( 'Bank Transaction does not exist for this Payout "%s".', $oPayout->id ) );
 		}
 
 		$oBridge->storeExternalBankTxnId( $oPayout, $oBankTxn );
