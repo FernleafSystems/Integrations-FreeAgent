@@ -22,7 +22,7 @@ class ExplainBankTxnWithInvoices {
 		$oPayout = $this->getPayoutVO();
 
 		$sBaseCurrency = $this->getBaseCurrency();
-		$sPayoutDatedOn = date( 'Y-m-d', $this->getPayoutVO()->getDateArrival() );
+		$sPayoutDatedOn = date( 'Y-m-d', $this->getPayoutVO()->date_arrival );
 		$oCurrencyEx = new CurrencyExchangeRates();
 
 		$oBankTxn = $this->getBankTransactionVo();

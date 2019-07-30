@@ -82,38 +82,10 @@ class PayoutVO {
 	}
 
 	/**
-	 * @return int
-	 */
-	public function getDateArrival() {
-		return $this->getParam( 'date_arrival' );
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getId() {
-		return $this->getStringParam( 'id' );
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getExternalBankTxnId() {
-		return $this->getParam( 'ext_bank_txn_id' );
-	}
-
-	/**
 	 * @return string
 	 */
 	public function getExternalBillId() {
 		return $this->getParam( 'ext_bill_id' );
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getGateway() {
-		return $this->getStringParam( 'gateway' );
 	}
 
 	/**
@@ -134,8 +106,7 @@ class PayoutVO {
 	 * @return int
 	 */
 	public function getTotalNet() {
-		return $this->getChargeTotalTally( 'amount_net' )
-			   + $this->getRefundTotalTally( 'amount_net' );
+		return bcadd( $this->getChargeTotalTally( 'amount_net' ), $this->getRefundTotalTally( 'amount_net' ), 2 );
 	}
 
 	/**
@@ -213,6 +184,7 @@ class PayoutVO {
 	/**
 	 * @param string $mVal
 	 * @return $this
+	 * @deprecated
 	 */
 	public function setCurrency( $mVal ) {
 		$this->currency = $mVal;
@@ -222,6 +194,7 @@ class PayoutVO {
 	/**
 	 * @param int $mVal
 	 * @return $this
+	 * @deprecated
 	 */
 	public function setDateArrival( $mVal ) {
 		$this->date_arrival = $mVal;
@@ -231,6 +204,7 @@ class PayoutVO {
 	/**
 	 * @param int $mVal
 	 * @return $this
+	 * @deprecated
 	 */
 	public function setExternalBankTxnId( $mVal ) {
 		$this->ext_bank_txn_id = $mVal;
@@ -240,6 +214,7 @@ class PayoutVO {
 	/**
 	 * @param int $mVal
 	 * @return $this
+	 * @deprecated
 	 */
 	public function setExternalBillId( $mVal ) {
 		$this->ext_bill_id = $mVal;
@@ -262,5 +237,37 @@ class PayoutVO {
 	public function setId( $mVal ) {
 		$this->id = $mVal;
 		return $this;
+	}
+
+	/**
+	 * @return string
+	 * @deprecated
+	 */
+	public function getId() {
+		return $this->getStringParam( 'id' );
+	}
+
+	/**
+	 * @return string
+	 * @deprecated
+	 */
+	public function getGateway() {
+		return $this->getStringParam( 'gateway' );
+	}
+
+	/**
+	 * @return int
+	 * @deprecated
+	 */
+	public function getDateArrival() {
+		return $this->getParam( 'date_arrival' );
+	}
+
+	/**
+	 * @return string
+	 * @deprecated
+	 */
+	public function getExternalBankTxnId() {
+		return $this->getParam( 'ext_bank_txn_id' );
 	}
 }
