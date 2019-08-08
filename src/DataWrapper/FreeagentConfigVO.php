@@ -16,6 +16,7 @@ use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
  * @property int  $contact_id            - for payment process bills, such as Stripe / PayPal
  * @property bool $auto_create_bank_txn
  * @property bool $auto_locate_bank_txn
+ * @property bool $foreign_currency_bills
  */
 class FreeagentConfigVO {
 
@@ -35,6 +36,10 @@ class FreeagentConfigVO {
 		switch ( $sProperty ) {
 			case 'invoice_item_cat_id':
 				$mVal = str_pad( $mVal, '3', '0', STR_PAD_LEFT );
+				break;
+
+			case 'foreign_currency_bills':
+				$mVal = is_null( $mVal ) ? true : (bool)$mVal;
 				break;
 			default:
 				break;

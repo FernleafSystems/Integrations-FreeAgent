@@ -78,14 +78,14 @@ class PayoutVO {
 	 * @return string
 	 */
 	public function getCurrency() {
-		return strtolower( $this->getStringParam( 'currency' ) );
+		return strtolower( $this->currency );
 	}
 
 	/**
 	 * @return string
 	 */
 	public function getExternalBillId() {
-		return $this->getParam( 'ext_bill_id' );
+		return $this->ext_bill_id;
 	}
 
 	/**
@@ -155,7 +155,7 @@ class PayoutVO {
 	public function hasRefund( $oRefund ) {
 		$bExists = false;
 		foreach ( $this->getRefunds() as $oR ) {
-			if ( $oR->getId() == $oRefund->getId() ) {
+			if ( $oR->id == $oRefund->id ) {
 				$bExists = true;
 				break;
 			}

@@ -26,12 +26,16 @@ class ExplainBankTxnWithStripeBill {
 	 * @throws \Exception
 	 */
 	public function process( $oBill ) {
-		if ( $oBill->getAmountDue() > 0 ) {
+		if ( $oBill->due_value > 0 ) {
+			$oPO = $this->getPayoutVO();
 
-			if ( strcasecmp( $this->getPayoutVO()->getCurrency(), $this->getBaseCurrency() ) == 0 ) {
+			$bUseForeignCurrencyBill = $this->getFreeagentConfigVO()->foreign_currency_bills
+									   || ( strcasecmp( $oPO->currency, $this->getBaseCurrency() ) == 0 );
+			if ( $bUseForeignCurrencyBill ) {
 				$this->createSimpleExplanation( $oBill );
 			}
 			else {
+				// Uses a dedicated bank account as an intermediary for managing foreign currency bills
 				$oForeignBankAccount = $this->getForeignCurrencyBankAccount();
 				if ( is_null( $oForeignBankAccount ) ) {
 					throw  new \Exception( 'Attempting to explain a foreign currency bill without a currency transfer account.' );
@@ -57,7 +61,7 @@ class ExplainBankTxnWithStripeBill {
 			->setConnection( $this->getConnection() )
 			->setBankTxn( $this->getBankTransactionVo() )
 			->setBillPaid( $oBill )
-			->setValue( $oBill->getAmountTotal() )
+			->setValue( $oBill->total_value )
 			->create();
 
 		if ( empty( $oBankTxnExp ) ) {
@@ -69,15 +73,14 @@ class ExplainBankTxnWithStripeBill {
 	 * @return string
 	 */
 	protected function getBaseCurrency() {
-		/** @var Entities\Company\CompanyVO $oCompany */
-		$oCompany = ( new Entities\Company\Retrieve() )
+		return ( new Entities\Company\Retrieve() )
 			->setConnection( $this->getConnection() )
-			->sendRequestWithVoResponse();
-		return $oCompany->getCurrency();
+			->retrieve()
+			->currency;
 	}
 
 	/**
-	 * @return Entities\BankAccounts\BankAccountVO
+	 * @return Entities\BankAccounts\BankAccountVO|null
 	 */
 	protected function getForeignCurrencyBankAccount() {
 		$oForeignBankAccount = null;
@@ -87,7 +90,7 @@ class ExplainBankTxnWithStripeBill {
 			$oForeignBankAccount = ( new Entities\BankAccounts\Retrieve() )
 				->setConnection( $this->getConnection() )
 				->setEntityId( $nForeignBankAccountId )
-				->sendRequestWithVoResponse();
+				->retrieve();
 		}
 		return $oForeignBankAccount;
 	}

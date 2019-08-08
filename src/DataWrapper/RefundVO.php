@@ -7,6 +7,7 @@ use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
 /**
  * Class RefundVO
  * @package FernleafSystems\Integrations\Freeagent\DataWrapper
+ * @property string $id
  */
 class RefundVO {
 
@@ -64,9 +65,10 @@ class RefundVO {
 
 	/**
 	 * @return string
+	 * @deprecated
 	 */
 	public function getId() {
-		return $this->getStringParam( 'id' );
+		return $this->id;
 	}
 
 	/**

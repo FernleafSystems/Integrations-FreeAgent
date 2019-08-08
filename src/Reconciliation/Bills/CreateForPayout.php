@@ -36,9 +36,9 @@ class CreateForPayout {
 
 		$aComments = [
 			sprintf( 'Bill for Payout: %s', $oPayout->id ),
-			sprintf( 'Payout Gross Amount: %s %s', $oPayout->getCurrency(), $oPayout->getTotalGross() ),
-			sprintf( 'Payout Fees Total: %s %s', $oPayout->getCurrency(), $nTotalFees ),
-			sprintf( 'Payout Net Amount: %s %s', $oPayout->getCurrency(), round( $oPayout->getTotalNet(), 2 ) )
+			sprintf( 'Payout Gross Amount: %s %s', $oPayout->currency, $oPayout->getTotalGross() ),
+			sprintf( 'Payout Fees Total: %s %s', $oPayout->currency, $nTotalFees ),
+			sprintf( 'Payout Net Amount: %s %s', $oPayout->currency, round( $oPayout->getTotalNet(), 2 ) )
 		];
 
 		$oBillCreator = ( new Entities\Bills\Create() )
@@ -50,10 +50,11 @@ class CreateForPayout {
 			->setCategoryId( $this->getFreeagentConfigVO()->bill_cat_id )
 			->setComment( implode( "\n", $aComments ) )
 			->setTotalValue( $nTotalFees )
+			->setCurrency( $oPayout->currency )
 			->setSalesTaxRate( 0 );
 
 		// TODO: This is a bit of a hack as no accounting for base account country.
-		if ( $this->isEuCountry( $oBillContact->getCountry() ) ) {
+		if ( $this->isEuCountry( $oBillContact->country ) ) {
 			$oBillCreator->setEcStatus( 'EC Services' );
 		}
 
