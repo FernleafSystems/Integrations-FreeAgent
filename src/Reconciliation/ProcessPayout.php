@@ -51,7 +51,8 @@ class ProcessPayout {
 				->setConnection( $oCon )
 				->setEntityId( $nBankTxnId )
 				->retrieve();
-			if ( !empty( $oBankTxn ) && $oBankTxn->amount != $oPayout->getTotalNet() ) {
+			if ( $oBankTxn instanceof Entities\BankTransactions\BankTransactionVO
+				 && $oBankTxn->amount != $oPayout->getTotalNet() ) {
 				$oBankTxn = null; // useful if we're trying to correct something after the fact.
 			}
 		}
