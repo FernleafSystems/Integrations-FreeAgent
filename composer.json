@@ -18,7 +18,7 @@
   "require":      {
     "ext-bcmath":                            "*",
     "php":                                   ">=5.6.0",
-    "fernleafsystems/apiwrappers-freeagent": "~0.2.6",
+    "fernleafsystems/apiwrappers-freeagent": "~0.2.7",
     "ultraleet/currency-rates":              "~1.2.0"
   },
   "require-dev":  {
