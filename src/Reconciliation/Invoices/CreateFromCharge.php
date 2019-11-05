@@ -24,7 +24,7 @@ class CreateFromCharge {
 		$oCreator = ( new Entities\Invoices\Create() )
 			->setConnection( $this->getConnection() )
 			->setContact( $oContact )
-			->setDatedOn( $oCharge->getDate() )
+			->setDatedOn( $oCharge->date )
 			->setPaymentTerms( $oCharge->getPaymentTerms() )
 			->setExchangeRate( 1.0 )// TODO: Verify this perhaps with Txn
 			->setCurrency( $oCharge->getCurrency() )
