@@ -5,11 +5,13 @@ namespace FernleafSystems\Integrations\Freeagent\DataWrapper;
 use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
 
 /**
- * Class PayoutVO
+ * Class ChargeVO
  * @package FernleafSystems\Integrations\Freeagent\DataWrapper
- * @property string $id
- * @property string $gateway
- * @property string $item_name
+ * @property string     $id
+ * @property string     $gateway
+ * @property string     $item_name
+ * @property int        $payment_terms - days
+ * @property int|string $date          - YYYY-MM-DD
  */
 class ChargeVO {
 
@@ -49,13 +51,6 @@ class ChargeVO {
 	 */
 	public function getCurrency() {
 		return strtoupper( $this->getStringParam( 'currency' ) );
-	}
-
-	/**
-	 * @return int
-	 */
-	public function getDate() {
-		return $this->getParam( 'date' );
 	}
 
 	/**
@@ -126,7 +121,7 @@ class ChargeVO {
 	 * @return int
 	 */
 	public function getPaymentTerms() {
-		return (int)$this->getNumericParam( 'payment_terms', 14 );
+		return (int)$this->getNumericParam( 'payment_terms', 5 );
 	}
 
 	/**
@@ -251,8 +246,17 @@ class ChargeVO {
 	/**
 	 * @param int $nVal
 	 * @return $this
+	 * @deprecated
 	 */
 	public function setPaymentTerms( $nVal ) {
 		return $this->setParam( 'payment_terms', $nVal );
+	}
+
+	/**
+	 * @return int
+	 * @deprecated
+	 */
+	public function getDate() {
+		return $this->date;
 	}
 }

@@ -17,6 +17,7 @@ use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
  * @property bool $auto_create_bank_txn
  * @property bool $auto_locate_bank_txn
  * @property bool $foreign_currency_bills
+ * @property int  $invoice_payment_terms
  */
 class FreeagentConfigVO {
 
@@ -40,6 +41,10 @@ class FreeagentConfigVO {
 
 			case 'foreign_currency_bills':
 				$mVal = is_null( $mVal ) ? true : (bool)$mVal;
+				break;
+
+			case 'invoice_payment_terms':
+				$mVal = is_null( $mVal ) ? 14 : (int)$mVal;
 				break;
 			default:
 				break;
