@@ -7,14 +7,14 @@ use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
 /**
  * Class PayoutVO
  * @package FernleafSystems\Integrations\Freeagent\DataWrapper
+ * @property string     $id
+ * @property string     $currency
+ * @property string     $gateway
  * @property ChargeVO[] $charges
  * @property RefundVO[] $refunds
- * @property string     $currency
  * @property int        $date_arrival
  * @property int        $ext_bank_txn_id
  * @property int        $ext_bill_id
- * @property string     $gateway
- * @property string     $id
  */
 class PayoutVO {
 
@@ -244,7 +244,7 @@ class PayoutVO {
 	 * @deprecated
 	 */
 	public function getId() {
-		return $this->getStringParam( 'id' );
+		return $this->id;
 	}
 
 	/**

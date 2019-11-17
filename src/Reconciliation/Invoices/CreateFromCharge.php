@@ -27,7 +27,7 @@ class CreateFromCharge {
 			->setDatedOn( $oCharge->date )
 			->setPaymentTerms( $oCharge->getPaymentTerms() )
 			->setExchangeRate( 1.0 )// TODO: Verify this perhaps with Txn
-			->setCurrency( $oCharge->getCurrency() )
+			->setCurrency( $oCharge->currency )
 			->setComments(
 				serialize(
 					[

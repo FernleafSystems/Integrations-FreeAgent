@@ -8,10 +8,11 @@ use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
  * Class ChargeVO
  * @package FernleafSystems\Integrations\Freeagent\DataWrapper
  * @property string     $id
+ * @property string     $currency
+ * @property int|string $date          - YYYY-MM-DD
  * @property string     $gateway
  * @property string     $item_name
  * @property int        $payment_terms - days
- * @property int|string $date          - YYYY-MM-DD
  */
 class ChargeVO {
 
@@ -48,9 +49,10 @@ class ChargeVO {
 
 	/**
 	 * @return string
+	 * @deprecated
 	 */
 	public function getCurrency() {
-		return strtoupper( $this->getStringParam( 'currency' ) );
+		return strtoupper( $this->currency );
 	}
 
 	/**
@@ -156,35 +158,43 @@ class ChargeVO {
 	}
 
 	/**
-	 * @param string $mVal
+	 * @param string $sVal
 	 * @return $this
+	 * @deprecated
 	 */
-	public function setCurrency( $mVal ) {
-		return $this->setParam( 'currency', $mVal );
+	public function setCurrency( $sVal ) {
+		$this->currency = $sVal;
+		return $this;
 	}
 
 	/**
-	 * @param int $mVal
+	 * @param int $nVal
 	 * @return $this
+	 * @deprecated
 	 */
-	public function setDate( $mVal ) {
-		return $this->setParam( 'date', $mVal );
+	public function setDate( $nVal ) {
+		$this->date = $nVal;
+		return $this;
 	}
 
 	/**
 	 * @param string $sVal
 	 * @return $this
+	 * @deprecated
 	 */
 	public function setGateway( $sVal ) {
-		return $this->setParam( 'gateway', $sVal );
+		$this->gateway = $sVal;
+		return $this;
 	}
 
 	/**
 	 * @param string $sVal
 	 * @return $this
+	 * @deprecated
 	 */
 	public function setId( $sVal ) {
-		return $this->setParam( 'id', $sVal );
+		$this->id = $sVal;
+		return $this;
 	}
 
 	/**

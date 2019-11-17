@@ -8,6 +8,9 @@ use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
  * Class RefundVO
  * @package FernleafSystems\Integrations\Freeagent\DataWrapper
  * @property string $id
+ * @property string $currency
+ * @property string $date
+ * @property string $gateway
  */
 class RefundVO {
 
@@ -51,16 +54,17 @@ class RefundVO {
 
 	/**
 	 * @return int
+	 * @deprecated
 	 */
 	public function getDate() {
-		return $this->getParam( 'date' );
+		return $this->date;
 	}
 
 	/**
 	 * @return string
 	 */
 	public function getGateway() {
-		return $this->getStringParam( 'gateway' );
+		return $this->gateway;
 	}
 
 	/**
@@ -96,27 +100,32 @@ class RefundVO {
 	}
 
 	/**
-	 * @param string $mVal
+	 * @param string $sVal
 	 * @return $this
 	 */
-	public function setCurrency( $mVal ) {
-		return $this->setParam( 'currency', $mVal );
+	public function setCurrency( $sVal ) {
+		$this->currency = $sVal;
+		return $this;
 	}
 
 	/**
-	 * @param int $mVal
+	 * @param int $nVal
 	 * @return $this
+	 * @deprecated
 	 */
-	public function setDate( $mVal ) {
-		return $this->setParam( 'date', $mVal );
+	public function setDate( $nVal ) {
+		$this->date = $nVal;
+		return $this;
 	}
 
 	/**
 	 * @param string $sVal
 	 * @return $this
+	 * @deprecated
 	 */
 	public function setGateway( $sVal ) {
-		return $this->setParam( 'gateway', $sVal );
+		$this->gateway = $sVal;
+		return $this;
 	}
 
 	/**
@@ -130,8 +139,10 @@ class RefundVO {
 	/**
 	 * @param string $sVal
 	 * @return $this
+	 * @deprecated
 	 */
 	public function setId( $sVal ) {
-		return $this->setParam( 'id', $sVal );
+		$this->id = $sVal;
+		return $this;
 	}
 }
