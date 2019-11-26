@@ -19,41 +19,60 @@ class GetStripeBalanceTransactionsFromPayout {
 	use Stripe\Consumers\StripePayoutConsumer;
 
 	/**
-	 * charge, refund, adjustment, application_fee, application_fee_refund,
-	 * transfer, payment, payout, or payout_failure
-	 * @var string
-	 */
-	protected $sTransactionType;
-
-	/**
 	 * @return BalanceTransaction[]
 	 * @throws \Exception
 	 */
 	public function retrieve() {
+		$oPO = $this->getStripePayout();
 		/** @var BalanceTransaction[] $aChargeTxns */
 		$aChargeTxns = [];
 		/** @var BalanceTransaction[] $aRefundedCharges */
 		$aRefundedCharges = [];
-		/** @var BalanceTransaction $oBalTxn */
+		/** @var BalanceTransaction[] $aPayoutFailures */
+		$aPayoutFailures = [];
 
 		$nTotalTally = 0;
-		$nExpectedAmount = $this->getStripePayout()->amount;
+		/** @var BalanceTransaction $oBalTxn */
+		foreach ( $this->getPayoutBalanceTransactions()->autoPagingIterator() as $oBalTxn ) {
 
-		$oBalTxn_Charges = $this->getPayoutCharges();
-		foreach ( $oBalTxn_Charges->autoPagingIterator() as $oBalTxn ) {
-			$nTotalTally += $oBalTxn->net;
-			$aChargeTxns[] = $oBalTxn;
+			$bIncludeInTotalTally = true;
+
+			switch ( $oBalTxn->type ) {
+				case 'charge':
+					$aChargeTxns[] = $oBalTxn;
+					break;
+				case 'refund':
+					$aRefundedCharges[] = $oBalTxn;
+					break;
+				case 'payout_failure':
+					$aPayoutFailures[] = $oBalTxn;
+					break;
+
+				case 'payout':
+				default:
+					$bIncludeInTotalTally = false;
+					break;
+			}
+
+			if ( $bIncludeInTotalTally ) {
+				$nTotalTally += $oBalTxn->net;
+			}
 		}
 
-		$oBalTxn_Refunds = $this->getPayoutRefunds();
-		foreach ( $oBalTxn_Refunds->autoPagingIterator() as $oBalTxn ) {
-			$nTotalTally += $oBalTxn->net;
-			$aRefundedCharges[] = $oBalTxn;
+		if ( $nTotalTally != $oPO->amount ) {
+			throw new \Exception( sprintf( 'Total tally %s does not match transfer amount %s',
+				$nTotalTally, $oPO->amount ) );
 		}
 
-		if ( $nTotalTally != $nExpectedAmount ) {
-			throw new \Exception( sprintf( 'Total tally %s does not match transfer amount %s', $nTotalTally, $nExpectedAmount ) );
-		}
+		/**
+		 * 2019-11
+		 * With a quirk in TransferWise USD bank accounts, a (Reverse) Payout Failure occurred
+		 * where they tried to take a payment but it fails. This leaves Freeagent in an inconsistent
+		 * state.
+		 * It's covered by the $aPayoutFailures here so we completely ignore the total in here
+		 * that appears in subsequent Payouts that automatically adjust for the previously failed
+		 * reverse Payout.
+		 */
 
 		/**
 		 * So handling refunds can take 1 of 2 approaches:
@@ -90,52 +109,23 @@ class GetStripeBalanceTransactionsFromPayout {
 			}
 		}
 
-		return array_values( array_merge( $aChargeTxns, $aRefundedCharges ) );
+		return array_values( array_merge( $aChargeTxns, $aRefundedCharges, $aPayoutFailures ) );
 	}
 
 	/**
+	 * You can filter the type of balance transactions
+	 * https://stripe.com/docs/api/balance_transactions/list
 	 * @param array $aParams
 	 * @return Collection
 	 */
-	protected function sendRequest( $aParams = [] ) {
+	protected function getPayoutBalanceTransactions( $aParams = [] ) {
 		$aRequest = array_merge(
 			[
 				'payout' => $this->getStripePayout()->id,
-				//				'type'   => $this->getTransactionType(),
 				'limit'  => 20
 			],
 			$aParams
 		);
 		return BalanceTransaction::all( $aRequest );
-	}
-
-	/**
-	 * @return Collection
-	 */
-	protected function getPayoutCharges() {
-		return $this->sendRequest( [ 'type' => 'charge' ] );
-	}
-
-	/**
-	 * @return Collection
-	 */
-	protected function getPayoutRefunds() {
-		return $this->sendRequest( [ 'type' => 'refund' ] );
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getTransactionType() {
-		return empty( $this->sTransactionType ) ? 'charge' : $this->sTransactionType;
-	}
-
-	/**
-	 * @param string $sTransactionType
-	 * @return $this
-	 */
-	public function setTransactionType( $sTransactionType ) {
-		$this->sTransactionType = $sTransactionType;
-		return $this;
 	}
 }

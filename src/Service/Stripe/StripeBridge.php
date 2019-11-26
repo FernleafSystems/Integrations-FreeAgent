@@ -66,6 +66,8 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 		$oPayout->setId( $sPayoutId );
 
 		$oStripePayout = Payout::retrieve( $sPayoutId );
+
+		$nTotalPotentialDiff = 0;
 		try {
 			foreach ( $this->getStripeBalanceTransactions( $oStripePayout ) as $oBalTxn ) {
 				if ( $oBalTxn->type == 'charge' ) {
@@ -74,15 +76,32 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 				else if ( $oBalTxn->type == 'refund' ) {
 					$oPayout->addRefund( $this->buildRefundFromId( $oBalTxn->source ) );
 				}
+				else if ( $oBalTxn->type == 'payout_failure' ) {
+					$nTotalPotentialDiff += $oBalTxn->net;
+				}
 			}
 		}
 		catch ( \Exception $oE ) {
 		}
 
-		$nCompareTotal = bcmul( $oPayout->getTotalNet(), 100, 0 );
-		if ( bccomp( $oStripePayout->amount, $nCompareTotal ) ) {
-			throw new \Exception( sprintf( 'PayoutVO total (%s) differs from Stripe total (%s)',
-				$nCompareTotal, $oStripePayout->amount ) );
+		/**
+		 * 2019-11
+		 * We're handling here for failed payouts (due to TransferWise borderless account restrictions).
+		 * In the case where a refund is issued and it results in a "negative payment" because we don't have
+		 * sufficient funds within Stripe to cover it, it results in a "payout_failure" because TransferWise
+		 * doesn't support withdrawals.
+		 *
+		 * So the subsequent Payout will have a "payout_failure" balance transaction within it, making the
+		 * totals out-of-sync so we cater to this scenario below by allowing a totals discrepancy, but only
+		 * as far as the total "payout_failures"
+		 *
+		 * In 9999/10000 cases, $nPayoutTotalDifference should be ZERO.
+		 */
+		$nTotalPayoutVO = bcmul( $oPayout->getTotalNet(), 100, 0 );
+		$nPayoutDiscrepancy = bcsub( $oStripePayout->amount, $nTotalPayoutVO );
+		if ( $nPayoutDiscrepancy != 0 && bccomp( abs( $nPayoutDiscrepancy ), abs( $nTotalPotentialDiff ) ) ) {
+			throw new \Exception( sprintf( 'PayoutVO total (%s) differs from Stripe total (%s). Discrepancy: %s',
+				$nTotalPayoutVO, $oStripePayout->amount, $nPayoutDiscrepancy ) );
 		}
 
 		$oPayout->date_arrival = $oStripePayout->arrival_date;
