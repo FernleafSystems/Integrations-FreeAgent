@@ -7,6 +7,7 @@ use FernleafSystems\Integrations\Freeagent;
 use Stripe\{
 	BalanceTransaction,
 	Charge,
+	PaymentIntent,
 	Payout,
 	Refund
 };
@@ -73,15 +74,30 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 				if ( $oBalTxn->type == 'charge' ) {
 					$oPayout->addCharge( $this->buildChargeFromTransaction( $oBalTxn->source ) );
 				}
-				else if ( $oBalTxn->type == 'refund' ) {
-					$oPayout->addRefund( $this->buildRefundFromId( $oBalTxn->source ) );
+				elseif ( $oBalTxn->type == 'refund' ) {
+					if ( strpos( $oBalTxn->source, 'ch_' ) === 0 ) {
+						$oPI = PaymentIntent::retrieve(
+							Charge::retrieve( $oBalTxn->source )->payment_intent
+						);
+						foreach ( $oPI->charges as $oCharge ) {
+							/** @var Charge $oCharge */
+							foreach ( $oCharge->refunds as $oRefund ) {
+								/** @var Refund $oRefund */
+								$oPayout->addRefund( $this->buildRefundFromId( $oRefund->id ) );
+							}
+						}
+					}
+					else {
+						$oPayout->addRefund( $this->buildRefundFromId( $oBalTxn->source ) );
+					}
 				}
-				else if ( $oBalTxn->type == 'payout_failure' ) {
+				elseif ( $oBalTxn->type == 'payout_failure' ) {
 					$nTotalPotentialDiff += $oBalTxn->net;
 				}
 			}
 		}
 		catch ( \Exception $oE ) {
+			error_log( $oE->getMessage() );
 		}
 
 		/**
