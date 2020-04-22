@@ -19,7 +19,7 @@
     "php":                                   ">=7.2",
     "fernleafsystems/apiwrappers-freeagent": "~0.2.7",
     "paypal/merchant-sdk-php":               "~3.0",
-    "stripe/stripe-php":                     "^6.43.0",
+    "stripe/stripe-php":                     "^7",
     "ultraleet/currency-rates":              "~1.2.0",
     "ext-bcmath":                            "*"
   },
