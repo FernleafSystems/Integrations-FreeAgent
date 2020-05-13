@@ -75,39 +75,9 @@ class GetStripeBalanceTransactionsFromPayout {
 		 */
 
 		/**
-		 * So handling refunds can take 1 of 2 approaches:
-		 * #1 if refund and its associated charge is within the SAME payout,
-		 * we can simply just have 1 cancel the other and ignore it.
-		 * #2 treat all refunds explicitly. We tally up all charges and all refunds
-		 * and process them together, creating freeagent entries for all of them. This
-		 * approach covers both cases.
+		 * 2020-05
+		 * Stripe stopped refunding their fees. So we scrapped all that was here to handle refunds.
 		 */
-
-		{// This approach only handles the case (#1) where the refund+charge are in the same payout.
-			// Now we remove any refunded charges TODO: assumes WHOLE charge refunds
-			foreach ( $aRefundedCharges as $nRefundKey => $oRefundTxn ) {
-
-				// with an older stripe API, we get CH_ instead of RE_ so we must load
-				// up the Charge and get the Refund objects from within it.
-				if ( strpos( $oRefundTxn->source, 'ch_' ) === 0 ) {
-					$oCH = Charge::retrieve( $oRefundTxn->source );
-					$aRefunds = $oCH->refunds;
-				}
-				else {
-					$aRefunds = [ Refund::retrieve( $oRefundTxn->source ) ];
-				}
-
-				/** @var Refund[] $aRefunds */
-				foreach ( $aChargeTxns as $nChargeKey => $oBalTxn ) {
-					foreach ( $aRefunds as $oRef ) {
-						if ( $oRef->charge == $oBalTxn->source ) {
-							unset( $aChargeTxns[ $nChargeKey ] );
-							unset( $aRefundedCharges[ $nRefundKey ] );
-						}
-					}
-				}
-			}
-		}
 
 		return array_values( array_merge( $aChargeTxns, $aRefundedCharges, $aPayoutFailures ) );
 	}
