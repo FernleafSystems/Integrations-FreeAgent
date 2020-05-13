@@ -112,8 +112,15 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 		 * as far as the total "payout_failures"
 		 *
 		 * In 9999/10000 cases, $nPayoutTotalDifference should be ZERO.
+		 *
+		 * 2020-05-13
+		 * - Changed from getTotalNet() to getTotalGross() because Stripe stopped refunding fees.
+		 * - We then.
 		 */
-		$nTotalPayoutVO = bcmul( $oPayout->getTotalNet(), 100, 0 );
+		$nTotalPayoutVO = bcsub(
+			bcmul( $oPayout->getTotalGross(), 100, 0 ),
+			bcmul( $oPayout->getTotalFee(), 100, 0 )
+		);
 		$nPayoutDiscrepancy = bcsub( $oStripePayout->amount, $nTotalPayoutVO );
 		if ( $nPayoutDiscrepancy != 0 && bccomp( abs( $nPayoutDiscrepancy ), abs( $nTotalPotentialDiff ) ) ) {
 			throw new \Exception( sprintf( 'PayoutVO total (%s) differs from Stripe total (%s). Discrepancy: %s',
