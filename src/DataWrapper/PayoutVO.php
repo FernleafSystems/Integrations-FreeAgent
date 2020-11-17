@@ -7,42 +7,55 @@ use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
 /**
  * Class PayoutVO
  * @package FernleafSystems\Integrations\Freeagent\DataWrapper
- * @property string     $id
- * @property string     $currency
- * @property string     $gateway
- * @property ChargeVO[] $charges
- * @property RefundVO[] $refunds
- * @property int        $date_arrival
- * @property int        $ext_bank_txn_id
- * @property int        $ext_bill_id
+ * @property string         $id
+ * @property string         $currency
+ * @property string         $gateway
+ * @property ChargeVO[]     $charges
+ * @property RefundVO[]     $refunds
+ * @property AdjustmentVO[] $adjustments
+ * @property int            $date_arrival
+ * @property int            $ext_bank_txn_id
+ * @property int            $ext_bill_id
  */
 class PayoutVO {
 
 	use StdClassAdapter;
 
 	/**
-	 * @param ChargeVO|RefundVO $oItem
+	 * @param ChargeVO|RefundVO $item
 	 * @return $this
 	 */
-	public function addItem( $oItem ) {
-		if ( $oItem instanceof ChargeVO ) {
-			$this->addCharge( $oItem );
+	public function addItem( $item ) {
+		if ( $item instanceof ChargeVO ) {
+			$this->addCharge( $item );
 		}
-		else if ( $oItem instanceof RefundVO ) {
-			$this->addRefund( $oItem );
+		elseif ( $item instanceof RefundVO ) {
+			$this->addRefund( $item );
+		}
+		elseif ( $item instanceof AdjustmentVO ) {
+			$this->addRefund( $item );
 		}
 		return $this;
 	}
 
 	/**
-	 * @param ChargeVO $oCharge
+	 * @param ChargeVO $charge
 	 * @return $this
 	 */
-	public function addCharge( $oCharge ) {
-		if ( !$this->hasCharge( $oCharge ) ) {
+	public function addCharge( $charge ) {
+		if ( !$this->hasCharge( $charge ) ) {
 			$aC = $this->getCharges();
-			$aC[] = $oCharge;
+			$aC[] = $charge;
 			$this->setCharges( $aC );
+		}
+		return $this;
+	}
+
+	public function addAdjustment( AdjustmentVO $adjustment ) :self {
+		$adjustments = $this->adjustments ?? [];
+		if ( empty( $adjustments[ $adjustment->id ] ) ) {
+			$adjustments[ $adjustment->id ] = $adjustment;
+			$this->adjustments = $adjustments;
 		}
 		return $this;
 	}
@@ -92,45 +105,81 @@ class PayoutVO {
 	 * @return float
 	 */
 	public function getTotalGross() {
-		return bcadd( $this->getChargeTotalTally( 'amount_gross' ), $this->getRefundTotalTally( 'amount_gross' ), 2 );
+		return bcadd(
+			$this->getChargeTotalTally( 'amount_gross' ),
+			bcadd(
+				$this->getRefundTotalTally( 'amount_gross' ),
+				$this->getAdjustmentsTotalTally( 'amount_gross' ),
+				2
+			),
+			2
+		);
 	}
 
 	/**
 	 * @return float
 	 */
 	public function getTotalFee() {
-		return bcadd( $this->getChargeTotalTally( 'amount_fee' ), $this->getRefundTotalTally( 'amount_fee' ), 2 );
+		return bcadd(
+			$this->getChargeTotalTally( 'amount_fee' ),
+			bcadd(
+				$this->getRefundTotalTally( 'amount_fee' ),
+				$this->getAdjustmentsTotalTally( 'amount_fee' ),
+				2
+			),
+			2
+		);
 	}
 
 	/**
 	 * @return int
 	 */
 	public function getTotalNet() {
-		return bcadd( $this->getChargeTotalTally( 'amount_net' ), $this->getRefundTotalTally( 'amount_net' ), 2 );
+		return bcadd(
+			$this->getChargeTotalTally( 'amount_net' ),
+			bcadd(
+				$this->getRefundTotalTally( 'amount_net' ),
+				$this->getAdjustmentsTotalTally( 'amount_net' ),
+				2
+			),
+			2
+		);
 	}
 
 	/**
-	 * @param string $sKey
+	 * @param string $key
 	 * @return float
 	 */
-	protected function getChargeTotalTally( $sKey ) {
-		$nTotal = 0;
-		foreach ( $this->getCharges() as $oCh ) {
-			$nTotal = bcadd( $nTotal, $oCh->{$sKey}, 2 );
+	protected function getAdjustmentsTotalTally( string $key ) {
+		$total = 0;
+		foreach ( $this->adjustments ?? [] as $adj ) {
+			$total = bcadd( $total, $adj->{$key}, 2 );
 		}
-		return $nTotal;
+		return $total;
 	}
 
 	/**
-	 * @param string $sKey
+	 * @param string $key
 	 * @return float
 	 */
-	protected function getRefundTotalTally( $sKey ) {
-		$nTotal = 0;
-		foreach ( $this->getRefunds() as $oR ) {
-			$nTotal = bcadd( $nTotal, $oR->{$sKey}, 2 );
+	protected function getChargeTotalTally( string $key ) {
+		$total = 0;
+		foreach ( $this->charges ?? [] as $ch ) {
+			$total = bcadd( $total, $ch->{$key}, 2 );
 		}
-		return $nTotal;
+		return $total;
+	}
+
+	/**
+	 * @param string $key
+	 * @return float
+	 */
+	protected function getRefundTotalTally( string $key ) {
+		$total = 0;
+		foreach ( $this->refunds ?? [] as $ref ) {
+			$total = bcadd( $total, $ref->{$key}, 2 );
+		}
+		return $total;
 	}
 
 	/**

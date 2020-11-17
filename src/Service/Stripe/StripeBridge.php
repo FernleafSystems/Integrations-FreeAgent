@@ -38,6 +38,27 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 
 	/**
 	 * This needs to be extended to add the Invoice Item details.
+	 * @param BalanceTransaction $balTxn a Stripe Refund ID
+	 * @return Freeagent\DataWrapper\AdjustmentVO
+	 * @throws \Exception
+	 */
+	public function buildAdjustmentFromBalTxn( BalanceTransaction $balTxn ) :Freeagent\DataWrapper\AdjustmentVO {
+
+		$adj = new Freeagent\DataWrapper\AdjustmentVO();
+		if ( strpos( $balTxn->source, 'du_' ) === 0 ) {
+			$adj->type = 'dispute';
+		}
+
+		$adj->currency = $balTxn->currency;
+		$adj->date = $balTxn->created;
+
+		return $adj->setAmount_Gross( bcdiv( $balTxn->amount, 100, 2 ) )
+				   ->setAmount_Fee( bcdiv( $balTxn->fee, 100, 2 ) )
+				   ->setAmount_Net( bcdiv( $balTxn->net, 100, 2 ) );
+	}
+
+	/**
+	 * This needs to be extended to add the Invoice Item details.
 	 * @param string $sRefundId a Stripe Refund ID
 	 * @return Freeagent\DataWrapper\RefundVO
 	 * @throws \Exception
@@ -63,40 +84,44 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 	 * @throws \Exception
 	 */
 	public function buildPayoutFromId( $sPayoutId ) {
-		$oPayout = new Freeagent\DataWrapper\PayoutVO();
-		$oPayout->setId( $sPayoutId );
+		$payout = new Freeagent\DataWrapper\PayoutVO();
+		$payout->setId( $sPayoutId );
 
 		$oStripePayout = Payout::retrieve( $sPayoutId );
 
 		$nTotalPotentialDiff = 0;
 		try {
-			foreach ( $this->getStripeBalanceTransactions( $oStripePayout ) as $oBalTxn ) {
-				if ( $oBalTxn->type == 'charge' ) {
-					$oPayout->addCharge( $this->buildChargeFromTransaction( $oBalTxn->source ) );
+			foreach ( $this->getStripeBalanceTransactions( $oStripePayout ) as $balTxn ) {
+				if ( $balTxn->type == 'charge' ) {
+					$payout->addCharge( $this->buildChargeFromTransaction( $balTxn->source ) );
 				}
-				elseif ( $oBalTxn->type == 'refund' ) {
-					if ( strpos( $oBalTxn->source, 'ch_' ) === 0 ) {
-						$oPI = PaymentIntent::retrieve(
-							Charge::retrieve( $oBalTxn->source )->payment_intent
+				elseif ( $balTxn->type == 'refund' ) {
+					if ( strpos( $balTxn->source, 'ch_' ) === 0 ) {
+						$PI = PaymentIntent::retrieve(
+							Charge::retrieve( $balTxn->source )->payment_intent
 						);
-						foreach ( $oPI->charges as $oCharge ) {
-							/** @var Charge $oCharge */
-							foreach ( $oCharge->refunds as $oRefund ) {
+						foreach ( $PI->charges as $ch ) {
+							/** @var Charge $ch */
+							foreach ( $ch->refunds as $oRefund ) {
 								/** @var Refund $oRefund */
-								$oPayout->addRefund( $this->buildRefundFromId( $oRefund->id ) );
+								$payout->addRefund( $this->buildRefundFromId( $oRefund->id ) );
 							}
 						}
 					}
 					else {
-						$oPayout->addRefund( $this->buildRefundFromId( $oBalTxn->source ) );
+						$payout->addRefund( $this->buildRefundFromId( $balTxn->source ) );
 					}
 				}
-				elseif ( $oBalTxn->type == 'payout_failure' ) {
-					$nTotalPotentialDiff += $oBalTxn->net;
+				elseif ( $balTxn->type == 'adjustment' ) {
+					$payout->addAdjustment( $this->buildAdjustmentFromBalTxn( $balTxn ) );
+				}
+				elseif ( $balTxn->type == 'payout_failure' ) {
+					$nTotalPotentialDiff += $balTxn->net;
 				}
 			}
 		}
 		catch ( \Exception $oE ) {
+			var_dump( $oE->getMessage() );
 			error_log( $oE->getMessage() );
 		}
 
@@ -118,18 +143,19 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 		 * - We then.
 		 */
 		$nTotalPayoutVO = bcsub(
-			bcmul( $oPayout->getTotalGross(), 100, 0 ),
-			bcmul( $oPayout->getTotalFee(), 100, 0 )
+			bcmul( $payout->getTotalGross(), 100, 0 ),
+			bcmul( $payout->getTotalFee(), 100, 0 )
 		);
+
 		$nPayoutDiscrepancy = bcsub( $oStripePayout->amount, $nTotalPayoutVO );
 		if ( $nPayoutDiscrepancy != 0 && bccomp( abs( $nPayoutDiscrepancy ), abs( $nTotalPotentialDiff ) ) ) {
 			throw new \Exception( sprintf( 'PayoutVO total (%s) differs from Stripe total (%s). Discrepancy: %s',
 				$nTotalPayoutVO, $oStripePayout->amount, $nPayoutDiscrepancy ) );
 		}
 
-		$oPayout->date_arrival = $oStripePayout->arrival_date;
-		$oPayout->currency = $oStripePayout->currency;
-		return $oPayout;
+		$payout->date_arrival = $oStripePayout->arrival_date;
+		$payout->currency = $oStripePayout->currency;
+		return $payout;
 	}
 
 	/**
