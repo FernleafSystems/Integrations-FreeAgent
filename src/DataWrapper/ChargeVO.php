@@ -2,43 +2,14 @@
 
 namespace FernleafSystems\Integrations\Freeagent\DataWrapper;
 
-use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
-
 /**
  * Class ChargeVO
  * @package FernleafSystems\Integrations\Freeagent\DataWrapper
- * @property string     $id
- * @property string     $currency
- * @property int|string $date          - YYYY-MM-DD
  * @property string     $gateway
  * @property string     $item_name
  * @property int        $payment_terms - days
  */
-class ChargeVO {
-
-	use StdClassAdapter;
-
-	/**
-	 * @return float
-	 */
-	public function getAmount_Net() {
-		return $this->getNumericParam( 'amount_net' );
-	}
-
-	/**
-	 * This is not gross with taxes, but gross with payment processor fees
-	 * @return float
-	 */
-	public function getAmount_Gross() {
-		return $this->getNumericParam( 'amount_gross' );
-	}
-
-	/**
-	 * @return float
-	 */
-	public function getAmount_Fee() {
-		return $this->getNumericParam( 'amount_fee' );
-	}
+class ChargeVO extends BaseTxnVO {
 
 	/**
 	 * @return string
@@ -51,24 +22,8 @@ class ChargeVO {
 	 * @return string
 	 * @deprecated
 	 */
-	public function getCurrency() {
-		return strtoupper( $this->currency );
-	}
-
-	/**
-	 * @return string
-	 * @deprecated
-	 */
 	public function getGateway() {
 		return $this->gateway;
-	}
-
-	/**
-	 * @return string
-	 * @deprecated
-	 */
-	public function getId() {
-		return $this->id;
 	}
 
 	/**
@@ -134,66 +89,12 @@ class ChargeVO {
 	}
 
 	/**
-	 * @param float $mVal
-	 * @return $this
-	 */
-	public function setAmount_Fee( $mVal ) {
-		return $this->setParam( 'amount_fee', $mVal );
-	}
-
-	/**
-	 * @param float $mVal
-	 * @return $this
-	 */
-	public function setAmount_Gross( $mVal ) {
-		return $this->setParam( 'amount_gross', $mVal );
-	}
-
-	/**
-	 * @param float $mVal
-	 * @return $this
-	 */
-	public function setAmount_Net( $mVal ) {
-		return $this->setParam( 'amount_net', $mVal );
-	}
-
-	/**
-	 * @param string $sVal
+	 * @param string $val
 	 * @return $this
 	 * @deprecated
 	 */
-	public function setCurrency( $sVal ) {
-		$this->currency = $sVal;
-		return $this;
-	}
-
-	/**
-	 * @param int $nVal
-	 * @return $this
-	 * @deprecated
-	 */
-	public function setDate( $nVal ) {
-		$this->date = $nVal;
-		return $this;
-	}
-
-	/**
-	 * @param string $sVal
-	 * @return $this
-	 * @deprecated
-	 */
-	public function setGateway( $sVal ) {
-		$this->gateway = $sVal;
-		return $this;
-	}
-
-	/**
-	 * @param string $sVal
-	 * @return $this
-	 * @deprecated
-	 */
-	public function setId( $sVal ) {
-		$this->id = $sVal;
+	public function setGateway( $val ) {
+		$this->gateway = $val;
 		return $this;
 	}
 
@@ -260,13 +161,5 @@ class ChargeVO {
 	 */
 	public function setPaymentTerms( $nVal ) {
 		return $this->setParam( 'payment_terms', $nVal );
-	}
-
-	/**
-	 * @return int
-	 * @deprecated
-	 */
-	public function getDate() {
-		return $this->date;
 	}
 }

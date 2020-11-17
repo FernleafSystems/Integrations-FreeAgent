@@ -5,9 +5,7 @@ namespace FernleafSystems\Integrations\Freeagent\Service\Stripe\Utility;
 use FernleafSystems\Integrations\Freeagent\Service\Stripe;
 use Stripe\{
 	BalanceTransaction,
-	Charge,
-	Collection,
-	Refund
+	Collection
 };
 
 /**
@@ -23,45 +21,33 @@ class GetStripeBalanceTransactionsFromPayout {
 	 * @throws \Exception
 	 */
 	public function retrieve() {
-		$oPO = $this->getStripePayout();
-		/** @var BalanceTransaction[] $aChargeTxns */
-		$aChargeTxns = [];
-		/** @var BalanceTransaction[] $aRefundedCharges */
-		$aRefundedCharges = [];
-		/** @var BalanceTransaction[] $aPayoutFailures */
-		$aPayoutFailures = [];
+		$PO = $this->getStripePayout();
 
-		$nTotalTally = 0;
-		/** @var BalanceTransaction $oBalTxn */
-		foreach ( $this->getPayoutBalanceTransactions()->autoPagingIterator() as $oBalTxn ) {
+		/** @var BalanceTransaction[] $transactions */
+		$transactions = [];
 
-			$bIncludeInTotalTally = true;
+		$sanityTotal = 0;
+		/** @var BalanceTransaction $balTxn */
+		foreach ( $this->getPayoutBalanceTransactions()->autoPagingIterator() as $balTxn ) {
 
-			switch ( $oBalTxn->type ) {
+			switch ( $balTxn->type ) {
+				case 'adjustment':
 				case 'charge':
-					$aChargeTxns[] = $oBalTxn;
-					break;
 				case 'refund':
-					$aRefundedCharges[] = $oBalTxn;
-					break;
 				case 'payout_failure':
-					$aPayoutFailures[] = $oBalTxn;
+					$transactions[] = $balTxn;
+					$sanityTotal += $balTxn->net;
 					break;
 
 				case 'payout':
 				default:
-					$bIncludeInTotalTally = false;
 					break;
-			}
-
-			if ( $bIncludeInTotalTally ) {
-				$nTotalTally += $oBalTxn->net;
 			}
 		}
 
-		if ( $nTotalTally != $oPO->amount ) {
+		if ( $sanityTotal != $PO->amount ) {
 			throw new \Exception( sprintf( 'Total tally %s does not match transfer amount %s',
-				$nTotalTally, $oPO->amount ) );
+				$sanityTotal, $PO->amount ) );
 		}
 
 		/**
@@ -79,23 +65,22 @@ class GetStripeBalanceTransactionsFromPayout {
 		 * Stripe stopped refunding their fees. So we scrapped all that was here to handle refunds.
 		 */
 
-		return array_values( array_merge( $aChargeTxns, $aRefundedCharges, $aPayoutFailures ) );
+		return $transactions;
 	}
 
 	/**
 	 * You can filter the type of balance transactions
 	 * https://stripe.com/docs/api/balance_transactions/list
-	 * @param array $aParams
+	 * @param array $params
 	 * @return Collection
 	 */
-	protected function getPayoutBalanceTransactions( $aParams = [] ) {
-		$aRequest = array_merge(
+	protected function getPayoutBalanceTransactions( $params = [] ) {
+		return BalanceTransaction::all( array_merge(
 			[
 				'payout' => $this->getStripePayout()->id,
 				'limit'  => 20
 			],
-			$aParams
-		);
-		return BalanceTransaction::all( $aRequest );
+			$params
+		) );
 	}
 }
