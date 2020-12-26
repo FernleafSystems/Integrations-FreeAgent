@@ -13,9 +13,9 @@ use FernleafSystems\Integrations\Freeagent\Reconciliation;
  */
 class ProcessPayout {
 
-	use Consumers\BridgeConsumer,
-		Consumers\FreeagentConfigVoConsumer,
-		ConnectionConsumer;
+	use ConnectionConsumer;
+	use Consumers\BridgeConsumer;
+	use Consumers\FreeagentConfigVoConsumer;
 
 	/**
 	 * - verify we can load the bank account
@@ -26,75 +26,75 @@ class ProcessPayout {
 	 * @throws \Exception
 	 */
 	public function process( $sPayoutId ) {
-		$oBridge = $this->getBridge();
-		$oCon = $this->getConnection();
-		$oPayout = $oBridge->buildPayoutFromId( $sPayoutId );
-		$oFreeagentConfig = $this->getFreeagentConfigVO();
+		$bridge = $this->getBridge();
+		$conn = $this->getConnection();
+		$oPayout = $bridge->buildPayoutFromId( $sPayoutId );
+		$faCfg = $this->getFreeagentConfigVO();
 
-		$sBankId = $oFreeagentConfig->getBankAccountIdForCurrency( $oPayout->getCurrency() );
+		$sBankId = $faCfg->getBankAccountIdForCurrency( $oPayout->getCurrency() );
 		if ( empty( $sBankId ) ) {
 			throw new \Exception( sprintf( 'No bank account specified for currency "%s".', $oPayout->getCurrency() ) );
 		}
 
 		$oBankAccount = ( new Entities\BankAccounts\Retrieve() )
-			->setConnection( $oCon )
+			->setConnection( $conn )
 			->setEntityId( $sBankId )
 			->retrieve();
 		if ( empty( $oBankAccount ) ) {
 			throw new \Exception( sprintf( 'Could not retrieve bank account with ID "%s".', $sBankId ) );
 		}
 
-		$oBankTxn = null;
-		$nBankTxnId = $oBridge->getExternalBankTxnId( $oPayout );
+		$txn = null;
+		$nBankTxnId = $bridge->getExternalBankTxnId( $oPayout );
 		if ( !empty( $nBankTxnId ) ) {
-			$oBankTxn = ( new Entities\BankTransactions\Retrieve() )
-				->setConnection( $oCon )
+			$txn = ( new Entities\BankTransactions\Retrieve() )
+				->setConnection( $conn )
 				->setEntityId( $nBankTxnId )
 				->retrieve();
-			if ( $oBankTxn instanceof Entities\BankTransactions\BankTransactionVO
-				 && $oBankTxn->amount != $oPayout->getTotalNet() ) {
-				$oBankTxn = null; // useful if we're trying to correct something after the fact.
+			if ( $txn instanceof Entities\BankTransactions\BankTransactionVO
+				 && $txn->amount != $oPayout->getTotalNet() ) {
+				$txn = null; // useful if we're trying to correct something after the fact.
 			}
 		}
 
 		// Find/Create the Freeagent Bank Transaction
-		if ( empty( $oBankTxn ) && $oFreeagentConfig->auto_locate_bank_txn ) {
-			$oBankTxn = ( new Reconciliation\BankTransactions\FindForPayout() )
-				->setConnection( $oCon )
+		if ( empty( $txn ) && $faCfg->auto_locate_bank_txn ) {
+			$txn = ( new Reconciliation\BankTransactions\FindForPayout() )
+				->setConnection( $conn )
 				->setPayoutVO( $oPayout )
 				->setBankAccountVo( $oBankAccount )
 				->find();
 		}
-		if ( empty( $oBankTxn ) && $oFreeagentConfig->auto_create_bank_txn ) {
-			$oBankTxn = ( new Reconciliation\BankTransactions\CreateForPayout() )
-				->setConnection( $oCon )
+		if ( empty( $txn ) && $faCfg->auto_create_bank_txn ) {
+			$txn = ( new Reconciliation\BankTransactions\CreateForPayout() )
+				->setConnection( $conn )
 				->setPayoutVO( $oPayout )
 				->setBankAccountVo( $oBankAccount )
 				->create();
 		}
 
-		if ( empty( $oBankTxn ) ) {
+		if ( empty( $txn ) ) {
 			throw new \Exception( sprintf( 'Bank Transaction does not exist for this Payout "%s".', $oPayout->id ) );
 		}
 
-		$oBridge->storeExternalBankTxnId( $oPayout, $oBankTxn );
+		$bridge->storeExternalBankTxnId( $oPayout, $txn );
 
 		// 1) Reconcile all the Invoices
 		( new Reconciliation\ProcessInvoicesForPayout() )
-			->setConnection( $oCon )
-			->setBridge( $oBridge )
-			->setFreeagentConfigVO( $oFreeagentConfig )
+			->setConnection( $conn )
+			->setBridge( $bridge )
+			->setFreeagentConfigVO( $faCfg )
 			->setPayoutVO( $oPayout )
-			->setBankTransactionVo( $oBankTxn )
+			->setBankTransactionVo( $txn )
 			->run();
 
 		// 2) Reconcile the Stripe Bill
 		( new Reconciliation\ProcessBillForPayout() )
-			->setConnection( $oCon )
+			->setConnection( $conn )
 			->setPayoutVO( $oPayout )
-			->setFreeagentConfigVO( $oFreeagentConfig )
-			->setBankTransactionVo( $oBankTxn )
-			->setBridge( $oBridge )
+			->setFreeagentConfigVO( $faCfg )
+			->setBankTransactionVo( $txn )
+			->setBridge( $bridge )
 			->run();
 	}
 }

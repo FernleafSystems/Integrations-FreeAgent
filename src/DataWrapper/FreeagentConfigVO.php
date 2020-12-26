@@ -17,6 +17,7 @@ use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
  * @property bool $auto_create_bank_txn
  * @property bool $auto_locate_bank_txn
  * @property bool $foreign_currency_bills
+ * @property bool $use_recurring_invoices
  * @property int  $invoice_payment_terms
  */
 class FreeagentConfigVO {

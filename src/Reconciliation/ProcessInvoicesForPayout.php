@@ -14,11 +14,11 @@ use FernleafSystems\Integrations\Freeagent\Reconciliation\Invoices;
  */
 class ProcessInvoicesForPayout {
 
-	use Consumers\BankTransactionVoConsumer,
-		Consumers\FreeagentConfigVoConsumer,
-		Consumers\PayoutVoConsumer,
-		Consumers\BridgeConsumer,
-		ConnectionConsumer;
+	use ConnectionConsumer;
+	use Consumers\BankTransactionVoConsumer;
+	use Consumers\BridgeConsumer;
+	use Consumers\FreeagentConfigVoConsumer;
+	use Consumers\PayoutVoConsumer;
 
 	/**
 	 * @throws \Exception

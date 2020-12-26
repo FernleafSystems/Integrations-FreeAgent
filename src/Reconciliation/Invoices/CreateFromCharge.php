@@ -8,16 +8,16 @@ use FernleafSystems\Integrations\Freeagent\Consumers;
 
 class CreateFromCharge {
 
-	use Consumers\BridgeConsumer,
-		Consumers\ChargeVoConsumer,
-		ConnectionConsumer,
-		Consumers\FreeagentConfigVoConsumer;
+	use ConnectionConsumer;
+	use Consumers\BridgeConsumer;
+	use Consumers\ChargeVoConsumer;
+	use Consumers\FreeagentConfigVoConsumer;
 
 	/**
 	 * @return Entities\Invoices\InvoiceVO|null
 	 * @throws \Exception
 	 */
-	public function create() {
+	public function create() :?Entities\Invoices\InvoiceVO {
 		$oCharge = $this->getChargeVO();
 		$oContact = $this->getContact();
 

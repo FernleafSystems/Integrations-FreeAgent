@@ -10,10 +10,10 @@ use FernleafSystems\Integrations\Freeagent\Consumers\PayoutVoConsumer;
 
 class InvoicesVerify {
 
-	use BridgeConsumer,
-		ConnectionConsumer,
-		FreeagentConfigVoConsumer,
-		PayoutVoConsumer;
+	use BridgeConsumer;
+	use ConnectionConsumer;
+	use FreeagentConfigVoConsumer;
+	use PayoutVoConsumer;
 
 	/**
 	 * @var Entities\Invoices\InvoiceVO[]
@@ -93,13 +93,8 @@ class InvoicesVerify {
 	 * corresponding invoice to Stripe Transaction
 	 * @return Entities\Invoices\InvoiceVO[]
 	 */
-	protected function getFreeagentInvoicesPool() {
+	protected function getFreeagentInvoicesPool() :array {
 		if ( !isset( $this->aFreeagentInvoices ) ) {
-//			$this->aFreeagentInvoices = ( new Entities\Invoices\Find() )
-//				->setConnection( $this->getConnection() )
-//				->filterByOpenOverdue()
-//				->filterByLastXMonths( 1 )
-//				->all();
 
 			$oInvIt = new Entities\Invoices\InvoicesIterator();
 			$oInvIt->setConnection( $this->getConnection() )
