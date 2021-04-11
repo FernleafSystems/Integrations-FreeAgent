@@ -20,15 +20,19 @@ namespace FernleafSystems\Integrations\Freeagent\DataWrapper;
 class ChargeVO extends BaseTxnVO {
 
 	public function __get( string $key ) {
+		$val = parent::__get( $key );
 		switch ( $key ) {
 			case 'is_vatmoss':
-				$val = $this->is_vatmoss ?? ( $this->ec_status === 'EC VAT MOSS' );
+				if ( is_null( $val ) ) {
+					$val = $this->ec_status === 'EC VAT MOSS';
+				}
 				break;
 			case 'ec_status':
-				$val = $this->ec_status ?? 'UK/Non-EC';
+				if ( is_null( $val ) ) {
+					$val = 'UK/Non-EC';
+				}
 				break;
 			default:
-				$val = parent::__get( $key );
 				break;
 		}
 		return $val;
