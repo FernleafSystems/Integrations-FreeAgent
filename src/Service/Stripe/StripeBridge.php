@@ -16,24 +16,24 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 
 	/**
 	 * This needs to be extended to add the Invoice Item details.
-	 * @param string $sChargeId a Stripe Charge ID
+	 * @param string $chargeId a Stripe Charge ID
 	 * @return Freeagent\DataWrapper\ChargeVO
 	 * @throws \Exception
 	 */
-	public function buildChargeFromTransaction( $sChargeId ) {
-		$oCharge = new Freeagent\DataWrapper\ChargeVO();
+	public function buildChargeFromTransaction( $chargeId ) {
+		$charge = new Freeagent\DataWrapper\ChargeVO();
 
-		$oStripeCharge = Charge::retrieve( $sChargeId );
-		$oBalTxn = BalanceTransaction::retrieve( $oStripeCharge->balance_transaction );
+		$stripeCharge = Charge::retrieve( $chargeId );
+		$balanceTXN = BalanceTransaction::retrieve( $stripeCharge->balance_transaction );
 
-		$oCharge->id = $sChargeId;
-		$oCharge->currency = strtoupper( $oStripeCharge->currency );
-		$oCharge->date = $oStripeCharge->created;
-		$oCharge->gateway = 'stripe';
-		$oCharge->payment_terms = $this->getFreeagentConfigVO()->invoice_payment_terms;
-		return $oCharge->setAmount_Gross( bcdiv( $oBalTxn->amount, 100, 2 ) )
-					   ->setAmount_Fee( bcdiv( $oBalTxn->fee, 100, 2 ) )
-					   ->setAmount_Net( bcdiv( $oBalTxn->net, 100, 2 ) );
+		$charge->id = $chargeId;
+		$charge->currency = strtoupper( $stripeCharge->currency );
+		$charge->date = $stripeCharge->created;
+		$charge->gateway = 'stripe';
+		$charge->payment_terms = $this->getFreeagentConfigVO()->invoice_payment_terms;
+		return $charge->setAmount_Gross( bcdiv( $balanceTXN->amount, 100, 2 ) )
+					   ->setAmount_Fee( bcdiv( $balanceTXN->fee, 100, 2 ) )
+					   ->setAmount_Net( bcdiv( $balanceTXN->net, 100, 2 ) );
 	}
 
 	/**
@@ -59,39 +59,39 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 
 	/**
 	 * This needs to be extended to add the Invoice Item details.
-	 * @param string $sRefundId a Stripe Refund ID
+	 * @param string $refundID a Stripe Refund ID
 	 * @return Freeagent\DataWrapper\RefundVO
 	 * @throws \Exception
 	 */
-	public function buildRefundFromId( $sRefundId ) {
-		$oRefund = new Freeagent\DataWrapper\RefundVO();
+	public function buildRefundFromId( $refundID ) {
+		$refund = new Freeagent\DataWrapper\RefundVO();
 
-		$oStrRefund = Refund::retrieve( $sRefundId );
-		$oBalTxn = BalanceTransaction::retrieve( $oStrRefund->balance_transaction );
+		$oStrRefund = Refund::retrieve( $refundID );
+		$balanceTXN = BalanceTransaction::retrieve( $oStrRefund->balance_transaction );
 
-		$oRefund->id = $sRefundId;
-		$oRefund->currency = $oStrRefund->currency;
-		$oRefund->date = $oStrRefund->created;
-		$oRefund->gateway = 'stripe';
-		return $oRefund->setAmount_Gross( bcdiv( $oBalTxn->amount, 100, 2 ) )
-					   ->setAmount_Fee( bcdiv( $oBalTxn->fee, 100, 2 ) )
-					   ->setAmount_Net( bcdiv( $oBalTxn->net, 100, 2 ) );
+		$refund->id = $refundID;
+		$refund->currency = $oStrRefund->currency;
+		$refund->date = $oStrRefund->created;
+		$refund->gateway = 'stripe';
+		return $refund->setAmount_Gross( bcdiv( $balanceTXN->amount, 100, 2 ) )
+					  ->setAmount_Fee( bcdiv( $balanceTXN->fee, 100, 2 ) )
+					  ->setAmount_Net( bcdiv( $balanceTXN->net, 100, 2 ) );
 	}
 
 	/**
-	 * @param string $sPayoutId
+	 * @param string $payoutID
 	 * @return Freeagent\DataWrapper\PayoutVO
 	 * @throws \Exception
 	 */
-	public function buildPayoutFromId( $sPayoutId ) {
+	public function buildPayoutFromId( $payoutID ) {
 		$payout = new Freeagent\DataWrapper\PayoutVO();
-		$payout->setId( $sPayoutId );
+		$payout->setId( $payoutID );
 
-		$oStripePayout = Payout::retrieve( $sPayoutId );
+		$stripePayout = Payout::retrieve( $payoutID );
 
 		$nTotalPotentialDiff = 0;
 		try {
-			foreach ( $this->getStripeBalanceTransactions( $oStripePayout ) as $balTxn ) {
+			foreach ( $this->getStripeBalanceTransactions( $stripePayout ) as $balTxn ) {
 				if ( $balTxn->type == 'charge' ) {
 					$payout->addCharge( $this->buildChargeFromTransaction( $balTxn->source ) );
 				}
@@ -147,14 +147,14 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 			bcmul( $payout->getTotalFee(), 100, 0 )
 		);
 
-		$nPayoutDiscrepancy = bcsub( $oStripePayout->amount, $nTotalPayoutVO );
+		$nPayoutDiscrepancy = bcsub( $stripePayout->amount, $nTotalPayoutVO );
 		if ( $nPayoutDiscrepancy != 0 && bccomp( abs( $nPayoutDiscrepancy ), abs( $nTotalPotentialDiff ) ) ) {
 			throw new \Exception( sprintf( 'PayoutVO total (%s) differs from Stripe total (%s). Discrepancy: %s',
-				$nTotalPayoutVO, $oStripePayout->amount, $nPayoutDiscrepancy ) );
+				$nTotalPayoutVO, $stripePayout->amount, $nPayoutDiscrepancy ) );
 		}
 
-		$payout->date_arrival = $oStripePayout->arrival_date;
-		$payout->currency = $oStripePayout->currency;
+		$payout->date_arrival = $stripePayout->arrival_date;
+		$payout->currency = $stripePayout->currency;
 		return $payout;
 	}
 

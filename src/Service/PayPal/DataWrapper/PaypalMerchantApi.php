@@ -2,7 +2,7 @@
 
 namespace FernleafSystems\Integrations\Freeagent\Service\PayPal\DataWrapper;
 
-use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
+use FernleafSystems\Utilities\Data\Adapter\DynProperties;
 use PayPal\Service\PayPalAPIInterfaceServiceService;
 
 /**
@@ -12,7 +12,7 @@ use PayPal\Service\PayPalAPIInterfaceServiceService;
  */
 class PaypalMerchantApi {
 
-	use StdClassAdapter;
+	use DynProperties;
 
 	/**
 	 * @return PayPalAPIInterfaceServiceService
@@ -25,15 +25,16 @@ class PaypalMerchantApi {
 	 * @return array
 	 * @deprecated
 	 */
-	public function getConfig() {
+	public function getConfig() :array {
 		return is_array( $this->api_config ) ? $this->api_config : [];
 	}
 
 	/**
-	 * @param array $aApiConfig
+	 * @param array $config
 	 * @return $this
 	 */
-	public function setConfig( $aApiConfig ) {
-		return $this->setParam( 'api_config', $aApiConfig );
+	public function setConfig( $config ) :self {
+		$this->api_config = $config;
+		return $this;
 	}
 }

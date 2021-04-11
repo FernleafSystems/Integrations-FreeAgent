@@ -10,22 +10,22 @@ interface BridgeInterface {
 	const KEY_FREEAGENT_INVOICE_IDS = 'freeagent_invoice_ids';
 
 	/**
-	 * @param string $sChargeId
+	 * @param string $chargeId
 	 * @return DataWrapper\ChargeVO
 	 */
-	public function buildChargeFromTransaction( $sChargeId );
+	public function buildChargeFromTransaction( $chargeId );
 
 	/**
-	 * @param string $sRefundId
+	 * @param string $refundID
 	 * @return DataWrapper\RefundVO
 	 */
-	public function buildRefundFromId( $sRefundId );
+	public function buildRefundFromId( $refundID );
 
 	/**
-	 * @param string $sPayoutId
+	 * @param string $payoutID
 	 * @return DataWrapper\PayoutVO
 	 */
-	public function buildPayoutFromId( $sPayoutId );
+	public function buildPayoutFromId( $payoutID );
 
 	/**
 	 * @param DataWrapper\ChargeVO $oCharge

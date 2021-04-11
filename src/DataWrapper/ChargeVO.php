@@ -5,17 +5,41 @@ namespace FernleafSystems\Integrations\Freeagent\DataWrapper;
 /**
  * Class ChargeVO
  * @package FernleafSystems\Integrations\Freeagent\DataWrapper
- * @property string     $gateway
- * @property string     $item_name
- * @property int        $payment_terms - days
+ * @property string $gateway
+ * @property string $item_name
+ * @property string $country
+ * @property bool   $is_vatmoss
+ * @property string $ec_status
+ * @property int    $payment_terms - days
+ * @property int    $item_quantity
+ * @property float  $item_subtotal
+ * @property float  $item_taxrate
+ * @property string $item_type
+ * @property mixed  $local_payment_id
  */
 class ChargeVO extends BaseTxnVO {
 
+	public function __get( string $key ) {
+		switch ( $key ) {
+			case 'is_vatmoss':
+				$val = $this->is_vatmoss ?? ( $this->ec_status === 'EC VAT MOSS' );
+				break;
+			case 'ec_status':
+				$val = $this->ec_status ?? 'UK/Non-EC';
+				break;
+			default:
+				$val = parent::__get( $key );
+				break;
+		}
+		return $val;
+	}
+
 	/**
 	 * @return string
+	 * @deprecated
 	 */
 	public function getCountry() {
-		return strtoupper( $this->getStringParam( 'country' ) );
+		return $this->country;
 	}
 
 	/**
@@ -34,132 +58,125 @@ class ChargeVO extends BaseTxnVO {
 		return $this->item_name;
 	}
 
-	/**
-	 * @return float|int|null
-	 */
-	public function getItemQuantity() {
-		return $this->getNumericParam( 'item_quantity', 1 );
+	public function getItemQuantity() :int {
+		return (int)( $this->item_quantity ?? 1 );
 	}
 
-	/**
-	 * @return float|int|null
-	 */
-	public function getItemSubtotal() {
-		return $this->getNumericParam( 'item_subtotal' );
+	public function getItemSubtotal() :float {
+		return (float)( $this->item_subtotal ?? 1 );
 	}
 
 	/**
 	 * Out of 100%
 	 * @return float|int
 	 */
-	public function getItemTaxRate() {
-		$nVal = $this->getNumericParam( 'item_taxrate' );
-		if ( $nVal > 0 && $nVal < 1 ) {
-			$nVal *= 100;
+	public function getItemTaxRate() :int {
+		$val = (float)$this->item_taxrate;
+		if ( $val > 0 && $val < 1 ) {
+			$val *= 100;
 		}
-		return abs( round( $nVal ) );
+		return (int)abs( round( $val ) );
 	}
 
 	/**
 	 * @return string
 	 */
 	public function getItemPeriodType() {
-		return $this->getStringParam( 'item_type', 'Years' );
+		return $this->item_type ?? 'Years';
 	}
 
-	/**
-	 * @return int
-	 */
 	public function getLocalPaymentId() {
-		return (int)$this->getNumericParam( 'local_payment_id', 0 );
+		return $this->local_payment_id ?? 0;
+	}
+
+	public function getPaymentTerms() :int {
+		return (int)$this->payment_terms ?? 5;
+	}
+
+	public function isEuVatMoss() :bool {
+		return (bool)$this->is_vatmoss ?? false;
 	}
 
 	/**
-	 * @return int
-	 */
-	public function getPaymentTerms() {
-		return (int)$this->getNumericParam( 'payment_terms', 5 );
-	}
-
-	/**
-	 * @return bool
-	 */
-	public function isEuVatMoss() {
-		return (bool)$this->getParam( 'is_vatmoss', false );
-	}
-
-	/**
-	 * @param string $val
+	 * @param string $value
 	 * @return $this
 	 * @deprecated
 	 */
-	public function setGateway( $val ) {
-		$this->gateway = $val;
+	public function setGateway( $value ) :self {
+		$this->gateway = $value;
 		return $this;
 	}
 
 	/**
-	 * @param bool $bIsVatMost
+	 * @param bool $isMoss
 	 * @return $this
 	 */
-	public function setIsEuVatMoss( $bIsVatMost ) {
-		return $this->setParam( 'is_vatmoss', $bIsVatMost );
+	public function setIsEuVatMoss( $isMoss ) :self {
+		$this->is_vatmoss = $isMoss;
+		return $this;
 	}
 
 	/**
-	 * @param string $sVal
+	 * @param string $value
 	 * @return $this
 	 */
-	public function setItemName( $sVal ) {
-		return $this->setParam( 'item_name', $sVal );
+	public function setItemName( $value ) :self {
+		$this->item_name = $value;
+		return $this;
 	}
 
 	/**
-	 * @param string $sVal
+	 * @param int $value
 	 * @return $this
 	 */
-	public function setItemQuantity( $sVal ) {
-		return $this->setParam( 'item_quantity', $sVal );
+	public function setItemQuantity( $value ) :self {
+		$this->item_quantity = $value;
+		return $this;
 	}
 
 	/**
-	 * @param float $nVal
+	 * @param float $value
 	 * @return $this
 	 */
-	public function setItemSubtotal( $nVal ) {
-		return $this->setParam( 'item_subtotal', $nVal );
+	public function setItemSubtotal( $value ) :self {
+		$this->item_subtotal = $value;
+		return $this;
 	}
 
 	/**
-	 * @param float $nVal
+	 * @param float $value
 	 * @return $this
 	 */
-	public function setItemTaxRate( $nVal ) {
-		return $this->setParam( 'item_taxrate', $nVal );
+	public function setItemTaxRate( $value ) :self {
+		$this->item_taxrate = $value;
+		return $this;
 	}
 
 	/**
-	 * @param string $sVal
+	 * @param string $periodType
 	 * @return $this
 	 */
-	public function setItemPeriodType( $sVal ) {
-		return $this->setParam( 'item_type', $sVal );
+	public function setItemPeriodType( string $periodType ) :self {
+		$this->item_type = $periodType;
+		return $this;
 	}
 
 	/**
-	 * @param int $nVal
+	 * @param mixed $value
 	 * @return $this
 	 */
-	public function setLocalPaymentId( $nVal ) {
-		return $this->setParam( 'local_payment_id', $nVal );
+	public function setLocalPaymentId( $value ) :self {
+		$this->local_payment_id = $value;
+		return $this;
 	}
 
 	/**
-	 * @param int $nVal
+	 * @param int $terms
 	 * @return $this
 	 * @deprecated
 	 */
-	public function setPaymentTerms( $nVal ) {
-		return $this->setParam( 'payment_terms', $nVal );
+	public function setPaymentTerms( $terms ) {
+		$this->payment_terms = $terms;
+		return $this;
 	}
 }
