@@ -20,51 +20,51 @@ abstract class PaypalBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 	 * @throws \Exception
 	 */
 	public function buildChargeFromTransaction( $sTxnID ) {
-		$oCharge = new Freeagent\DataWrapper\ChargeVO();
+		$charge = new Freeagent\DataWrapper\ChargeVO();
 
 		try {
-			$oDets = $this->getTxnChargeDetails( $sTxnID );
+			$details = $this->getTxnChargeDetails( $sTxnID );
 
-			$oCharge->id = $sTxnID;
-			$oCharge->currency = strtoupper( $oDets->GrossAmount->currencyID );
-			$oCharge->date = strtotime( $oDets->PaymentDate );
-			$oCharge->gateway = 'paypalexpress';
-			$oCharge->payment_terms = $this->getFreeagentConfigVO()->invoice_payment_terms;
-			$oCharge->setAmount_Gross( $oDets->GrossAmount->value )
-					->setAmount_Fee( $oDets->FeeAmount->value )
-					->setAmount_Net( $oDets->GrossAmount->value - $oDets->FeeAmount->value );
+			$charge->id = $sTxnID;
+			$charge->currency = strtoupper( $details->GrossAmount->currencyID );
+			$charge->date = strtotime( $details->PaymentDate );
+			$charge->gateway = 'paypalexpress';
+			$charge->payment_terms = $this->getFreeagentConfigVO()->invoice_payment_terms;
+			$charge->setAmount_Gross( $details->GrossAmount->value )
+				   ->setAmount_Fee( $details->FeeAmount->value )
+				   ->setAmount_Net( $details->GrossAmount->value - $details->FeeAmount->value );
 		}
-		catch ( \Exception $oE ) {
+		catch ( \Exception $e ) {
 		}
 
-		return $oCharge;
+		return $charge;
 	}
 
 	/**
 	 * This isn't applicable to PayPal
-	 * @param string $sRefundId
+	 * @param string $refundID
 	 * @return Freeagent\DataWrapper\RefundVO
 	 */
-	public function buildRefundFromId( $sRefundId ) {
+	public function buildRefundFromId( $refundID ) {
 		return null;
 	}
 
 	/**
 	 * With Paypal, the Transaction and the Payout are essentially the same thing.
-	 * @param string $sPayoutId
+	 * @param string $payoutID
 	 * @return Freeagent\DataWrapper\PayoutVO
 	 */
-	public function buildPayoutFromId( $sPayoutId ) {
+	public function buildPayoutFromId( $payoutID ) {
 		$oPayout = new Freeagent\DataWrapper\PayoutVO();
-		$oPayout->setId( $sPayoutId );
+		$oPayout->setId( $payoutID );
 
 		try {
-			$oDets = $this->getTxnChargeDetails( $sPayoutId );
+			$oDets = $this->getTxnChargeDetails( $payoutID );
 			$oPayout->date_arrival = strtotime( $oDets->PaymentDate );
 			$oPayout->currency = $oDets->GrossAmount->currencyID;
 
 			$oPayout->addCharge(
-				$this->buildChargeFromTransaction( $sPayoutId )
+				$this->buildChargeFromTransaction( $payoutID )
 			);
 		}
 		catch ( \Exception $oE ) {

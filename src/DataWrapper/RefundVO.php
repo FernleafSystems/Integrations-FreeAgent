@@ -25,20 +25,21 @@ class RefundVO extends BaseTxnVO {
 	}
 
 	/**
-	 * @param string $sVal
+	 * @param string $value
 	 * @return $this
 	 * @deprecated
 	 */
-	public function setGateway( $sVal ) {
-		$this->gateway = $sVal;
+	public function setGateway( $value ) {
+		$this->gateway = $value;
 		return $this;
 	}
 
 	/**
-	 * @param string $sVal
+	 * @param string $value
 	 * @return $this
 	 */
-	public function setGatewayChargeId( $sVal ) {
-		return $this->setParam( 'charge_id', $sVal );
+	public function setGatewayChargeId( $value ) :self {
+		$this->charge_id = $value;
+		return $this;
 	}
 }

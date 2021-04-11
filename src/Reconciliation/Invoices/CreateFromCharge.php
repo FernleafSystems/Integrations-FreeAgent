@@ -8,75 +8,75 @@ use FernleafSystems\Integrations\Freeagent\Consumers;
 
 class CreateFromCharge {
 
-	use Consumers\BridgeConsumer,
-		Consumers\ChargeVoConsumer,
-		ConnectionConsumer,
-		Consumers\FreeagentConfigVoConsumer;
+	use ConnectionConsumer;
+	use Consumers\BridgeConsumer;
+	use Consumers\ChargeVoConsumer;
+	use Consumers\FreeagentConfigVoConsumer;
 
 	/**
 	 * @return Entities\Invoices\InvoiceVO|null
 	 * @throws \Exception
 	 */
-	public function create() {
-		$oCharge = $this->getChargeVO();
-		$oContact = $this->getContact();
+	public function create() :?Entities\Invoices\InvoiceVO {
+		$charge = $this->getChargeVO();
+		$contact = $this->getContact();
 
-		$oCreator = ( new Entities\Invoices\Create() )
+		$creator = ( new Entities\Invoices\Create() )
 			->setConnection( $this->getConnection() )
-			->setContact( $oContact )
-			->setDatedOn( $oCharge->date )
-			->setPaymentTerms( $oCharge->getPaymentTerms() )
+			->setContact( $contact )
+			->setDatedOn( $charge->date )
+			->setPaymentTerms( $charge->getPaymentTerms() )
 			->setExchangeRate( 1.0 )// TODO: Verify this perhaps with Txn
-			->setCurrency( $oCharge->currency )
+			->setCurrency( $charge->currency )
 			->setComments(
 				serialize(
 					[
-						'local_payment_id'  => $oCharge->getLocalPaymentId(),
-						'gateway'           => $oCharge->gateway,
-						'gateway_charge_id' => $oCharge->id
+						'local_payment_id'  => $charge->getLocalPaymentId(),
+						'gateway'           => $charge->gateway,
+						'gateway_charge_id' => $charge->id
 					]
 				)
 			)
 			->addInvoiceItemVOs( $this->buildLineItemsFromCartItem() );
 
-		if ( $oCharge->isEuVatMoss() ) {
-			$oCreator->setEcPlaceOfSupply( $oContact->country )
-					 ->setEcStatusVatMoss();
+		if ( $charge->isEuVatMoss() ) {
+			$creator->setEcStatusVatMoss()
+					->setEcPlaceOfSupply( $charge->country ?? $contact->country );
 		}
 		else {
-			$oCreator->setEcStatusNonEc();
+			$creator->setEcStatus( $charge->ec_status );
 		}
 
-		$oExportedInvoice = $oCreator->create();
+		$exportedInvoice = $creator->create();
 
-		if ( !is_null( $oExportedInvoice ) ) {
+		if ( $exportedInvoice instanceof Entities\Invoices\InvoiceVO ) {
 			sleep( 2 );
-			$oExportedInvoice = $this->markInvoiceAsSent( $oExportedInvoice );
+			$exportedInvoice = $this->markInvoiceAsSent( $exportedInvoice );
 		}
 		else {
-//			var_dump( $oCreator->getRawDataAsArray() );
+//			var_dump( $creator->getRawDataAsArray() );
 			throw new \Exception( sprintf( 'Could not create invoice for Charge %s: %s',
-				$oCharge->id, $oCreator->getLastError()->getMessage() ) );
+				$charge->id, $creator->getLastError()->getMessage() ) );
 		}
 
 		$this->getBridge()
-			 ->storeFreeagentInvoiceIdForCharge( $oCharge, $oExportedInvoice );
+			 ->storeFreeagentInvoiceIdForCharge( $charge, $exportedInvoice );
 
-		return $oExportedInvoice;
+		return $exportedInvoice;
 	}
 
 	/**
-	 * @param Entities\Invoices\InvoiceVO $oInvoice
+	 * @param Entities\Invoices\InvoiceVO $invoice
 	 * @return Entities\Invoices\InvoiceVO
 	 */
-	protected function markInvoiceAsSent( $oInvoice ) {
+	protected function markInvoiceAsSent( Entities\Invoices\InvoiceVO $invoice ) {
 		( new Entities\Invoices\MarkAs() )
 			->setConnection( $this->getConnection() )
-			->setEntityId( $oInvoice->getId() )
+			->setEntityId( $invoice->getId() )
 			->sent();
 		return ( new Entities\Invoices\Retrieve() )
 			->setConnection( $this->getConnection() )
-			->setEntityId( $oInvoice->getId() )
+			->setEntityId( $invoice->getId() )
 			->retrieve();
 	}
 
@@ -84,19 +84,19 @@ class CreateFromCharge {
 	 * @return Entities\Invoices\Items\InvoiceItemVO[]
 	 */
 	protected function buildLineItemsFromCartItem() {
-		$aInvoiceItems = [];
-		$oCharge = $this->getChargeVO();
+		$invItems = [];
+		$charge = $this->getChargeVO();
 
-		$oItem = ( new Entities\Invoices\Items\InvoiceItemVO() )
-			->setType( $oCharge->getItemPeriodType() );
-		$oItem->description = $oCharge->item_name;
-		$oItem->quantity = $oCharge->getItemQuantity();
-		$oItem->price = $oCharge->getItemSubtotal();
-		$oItem->sales_tax_rate = $oCharge->getItemTaxRate();
-		$oItem->category = 'https://api.freeagent.com/v2/categories/'.$this->getFreeagentConfigVO()->invoice_item_cat_id;
+		$item = ( new Entities\Invoices\Items\InvoiceItemVO() )
+			->setType( $charge->getItemPeriodType() );
+		$item->description = $charge->item_name;
+		$item->quantity = $charge->getItemQuantity();
+		$item->price = $charge->getItemSubtotal();
+		$item->sales_tax_rate = $charge->getItemTaxRate();
+		$item->category = 'https://api.freeagent.com/v2/categories/'.$this->getFreeagentConfigVO()->invoice_item_cat_id;
 
-		$aInvoiceItems[] = $oItem;
-		return $aInvoiceItems;
+		$invItems[] = $item;
+		return $invItems;
 	}
 
 	/**

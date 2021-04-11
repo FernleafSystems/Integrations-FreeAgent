@@ -2,7 +2,7 @@
 
 namespace FernleafSystems\Integrations\Freeagent\DataWrapper;
 
-use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
+use FernleafSystems\Utilities\Data\Adapter\DynProperties;
 
 /**
  * Class PayoutVO
@@ -19,7 +19,7 @@ use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
  */
 class PayoutVO {
 
-	use StdClassAdapter;
+	use DynProperties;
 
 	/**
 	 * @param ChargeVO|RefundVO $item
@@ -33,7 +33,7 @@ class PayoutVO {
 			$this->addRefund( $item );
 		}
 		elseif ( $item instanceof AdjustmentVO ) {
-			$this->addRefund( $item );
+			$this->addAdjustment( $item );
 		}
 		return $this;
 	}
@@ -44,9 +44,9 @@ class PayoutVO {
 	 */
 	public function addCharge( $charge ) {
 		if ( !$this->hasCharge( $charge ) ) {
-			$aC = $this->getCharges();
-			$aC[] = $charge;
-			$this->setCharges( $aC );
+			$c = $this->getCharges();
+			$c[] = $charge;
+			$this->setCharges( $c );
 		}
 		return $this;
 	}
@@ -66,9 +66,9 @@ class PayoutVO {
 	 */
 	public function addRefund( $oRefund ) {
 		if ( !$this->hasRefund( $oRefund ) ) {
-			$aR = $this->getRefunds();
-			$aR[] = $oRefund;
-			$this->setRefunds( $aR );
+			$r = $this->getRefunds();
+			$r[] = $oRefund;
+			$this->setRefunds( $r );
 		}
 		return $this;
 	}
@@ -198,45 +198,45 @@ class PayoutVO {
 	}
 
 	/**
-	 * @param RefundVO $oRefund
+	 * @param RefundVO $refund
 	 * @return bool
 	 */
-	public function hasRefund( $oRefund ) {
-		$bExists = false;
-		foreach ( $this->getRefunds() as $oR ) {
-			if ( $oR->id == $oRefund->id ) {
-				$bExists = true;
+	public function hasRefund( $refund ) :bool {
+		$exists = false;
+		foreach ( $this->getRefunds() as $r ) {
+			if ( $r->id == $refund->id ) {
+				$exists = true;
 				break;
 			}
 		}
-		return $bExists;
+		return $exists;
 	}
 
 	/**
-	 * @param ChargeVO[] $aC
+	 * @param ChargeVO[] $charges
 	 * @return $this
 	 */
-	public function setCharges( $aC ) {
-		$this->charges = $aC;
+	public function setCharges( array $charges ) :self {
+		$this->charges = $charges;
 		return $this;
 	}
 
 	/**
-	 * @param RefundVO[] $aR
+	 * @param RefundVO[] $r
 	 * @return $this
 	 */
-	public function setRefunds( $aR ) {
-		$this->refunds = $aR;
+	public function setRefunds( array $r ) :self {
+		$this->refunds = $r;
 		return $this;
 	}
 
 	/**
-	 * @param string $mVal
+	 * @param string $value
 	 * @return $this
 	 * @deprecated
 	 */
-	public function setCurrency( $mVal ) {
-		$this->currency = $mVal;
+	public function setCurrency( $value ) {
+		$this->currency = $value;
 		return $this;
 	}
 
@@ -251,12 +251,12 @@ class PayoutVO {
 	}
 
 	/**
-	 * @param int $mVal
+	 * @param int $id
 	 * @return $this
 	 * @deprecated
 	 */
-	public function setExternalBankTxnId( $mVal ) {
-		$this->ext_bank_txn_id = $mVal;
+	public function setExternalBankTxnId( $id ) {
+		$this->ext_bank_txn_id = $id;
 		return $this;
 	}
 
@@ -301,7 +301,7 @@ class PayoutVO {
 	 * @deprecated
 	 */
 	public function getGateway() {
-		return $this->getStringParam( 'gateway' );
+		return $this->gateway;
 	}
 
 	/**
@@ -309,7 +309,7 @@ class PayoutVO {
 	 * @deprecated
 	 */
 	public function getDateArrival() {
-		return $this->getParam( 'date_arrival' );
+		return $this->date_arrival;
 	}
 
 	/**
@@ -317,6 +317,6 @@ class PayoutVO {
 	 * @deprecated
 	 */
 	public function getExternalBankTxnId() {
-		return $this->getParam( 'ext_bank_txn_id' );
+		return $this->ext_bank_txn_id;
 	}
 }

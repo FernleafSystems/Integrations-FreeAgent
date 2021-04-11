@@ -2,7 +2,7 @@
 
 namespace FernleafSystems\Integrations\Freeagent\DataWrapper;
 
-use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
+use FernleafSystems\Utilities\Data\Adapter\DynPropertiesClass;
 
 /**
  * Class FreeagentConfigVO
@@ -17,40 +17,36 @@ use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
  * @property bool $auto_create_bank_txn
  * @property bool $auto_locate_bank_txn
  * @property bool $foreign_currency_bills
+ * @property bool $use_recurring_invoices
  * @property int  $invoice_payment_terms
  */
-class FreeagentConfigVO {
-
-	use StdClassAdapter {
-		__get as __adapterGet;
-		__set as __adapterSet;
-	}
+class FreeagentConfigVO extends DynPropertiesClass {
 
 	/**
-	 * @param string $sProperty
+	 * @param string $key
 	 * @return mixed
 	 */
-	public function __get( $sProperty ) {
+	public function __get( string $key ) {
 
-		$mVal = $this->__adapterGet( $sProperty );
+		$value = parent::__get( $key );
 
-		switch ( $sProperty ) {
+		switch ( $key ) {
 			case 'invoice_item_cat_id':
-				$mVal = str_pad( $mVal, '3', '0', STR_PAD_LEFT );
+				$value = str_pad( $value, '3', '0', STR_PAD_LEFT );
 				break;
 
 			case 'foreign_currency_bills':
-				$mVal = is_null( $mVal ) ? true : (bool)$mVal;
+				$value = is_null( $value ) ? true : (bool)$value;
 				break;
 
 			case 'invoice_payment_terms':
-				$mVal = is_null( $mVal ) ? 14 : (int)$mVal;
+				$value = is_null( $value ) ? 14 : (int)$value;
 				break;
 			default:
 				break;
 		}
 
-		return $mVal;
+		return $value;
 	}
 
 	/**
@@ -152,93 +148,103 @@ class FreeagentConfigVO {
 	}
 
 	/**
-	 * @param int $nVal
+	 * @param int $value
 	 * @return $this
 	 * @deprecated
 	 */
-	public function setBankAccountIdEur( $nVal ) {
-		return $this->setParam( 'bank_account_id_eur', $nVal );
+	public function setBankAccountIdEur( $value ) :self {
+		$this->bank_account_id_eur = $value;
+		return $this;
 	}
 
 	/**
-	 * @param int $nVal
+	 * @param int $value
 	 * @return $this
 	 * @deprecated
 	 */
-	public function setBankAccountIdGbp( $nVal ) {
-		return $this->setParam( 'bank_account_id_gbp', $nVal );
+	public function setBankAccountIdGbp( $value ) :self {
+		$this->bank_account_id_gbp = $value;
+		return $this;
 	}
 
 	/**
-	 * @param int $nVal
+	 * @param int $value
 	 * @return $this
 	 * @deprecated
 	 */
-	public function setBankAccountIdUsd( $nVal ) {
-		return $this->setParam( 'bank_account_id_usd', $nVal );
+	public function setBankAccountIdUsd( $value ) :self {
+		$this->bank_account_id_usd = $value;
+		return $this;
 	}
 
 	/**
-	 * @param string $sCurrency
-	 * @param int    $nVal
+	 * @param string $currency
+	 * @param int    $value
 	 * @return $this
 	 * @deprecated
 	 */
-	public function setBankAccountIdForCurrency( $sCurrency, $nVal ) {
-		return $this->setParam( 'bank_account_id_'.strtolower( $sCurrency ), $nVal );
+	public function setBankAccountIdForCurrency( string $currency, $value ) :self {
+		$this->{'bank_account_id_'.strtolower( $currency )} = $value;
+		return $this;
 	}
 
 	/**
-	 * @param int $nVal
+	 * @param int $value
 	 * @return $this
 	 * @deprecated
 	 */
-	public function setBankAccountIdForeignCurrencyTransfer( $nVal ) {
-		return $this->setParam( 'bank_account_id_foreign', $nVal );
+	public function setBankAccountIdForeignCurrencyTransfer( $value ) :self {
+		$this->bank_account_id_foreign = $value;
+		return $this;
 	}
 
 	/**
-	 * @param int $nVal
+	 * @param int $value
 	 * @return $this
 	 * @deprecated
 	 */
-	public function setBillCategoryId( $nVal ) {
-		return $this->setParam( 'bill_cat_id', $nVal );
+	public function setBillCategoryId( $value ) :self {
+		$this->bill_cat_id = $value;
+		return $this;
 	}
 
 	/**
-	 * @param int $nVal
+	 * @param int $value
 	 * @return $this
 	 * @deprecated
 	 */
-	public function setBillContactId( $nVal ) {
-		return $this->setParam( 'contact_id', $nVal );
+	public function setBillContactId( $value ) :self {
+		$this->contact_id = $value;
+		return $this;
 	}
 
 	/**
-	 * @param int $nVal
+	 * @param int $value
 	 * @return $this
 	 * @deprecated
 	 */
-	public function setInvoiceItemCategoryId( $nVal ) {
-		return $this->setParam( 'invoice_item_cat_id', $nVal );
+	public function setInvoiceItemCategoryId( $value ) :self {
+		$this->invoice_item_cat_id = $value;
+		return $this;
 	}
 
 	/**
-	 * @param bool $bAutoCreate
+	 * @param bool $auto
 	 * @return $this
 	 * @deprecated
 	 */
-	public function setIsAutoCreateBankTransactions( $bAutoCreate = true ) {
-		return $this->setParam( 'auto_create_bank_txn', $bAutoCreate );
+	public function setIsAutoCreateBankTransactions( $auto = true ) :self {
+		$this->auto_create_bank_txn = $auto;
+		return $this;
 	}
 
 	/**
-	 * @param bool $bAutoLocate
+	 * @param bool $auto
 	 * @return $this
 	 * @deprecated
 	 */
-	public function setIsAutoLocateBankTxns( $bAutoLocate = true ) {
-		return $this->setParam( 'auto_locate_bank_txn', $bAutoLocate );
+	public function setIsAutoLocateBankTxns( $auto = true ) :self {
+		$this->auto_locate_bank_txn = $auto;
+		return $this;
 	}
 }

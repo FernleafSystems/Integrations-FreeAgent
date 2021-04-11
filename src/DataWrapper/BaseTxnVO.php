@@ -2,7 +2,7 @@
 
 namespace FernleafSystems\Integrations\Freeagent\DataWrapper;
 
-use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
+use FernleafSystems\Utilities\Data\Adapter\DynPropertiesClass;
 
 /**
  * Class BaseTxnVO
@@ -14,9 +14,7 @@ use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
  * @property string $currency
  * @property int    $date
  */
-class BaseTxnVO {
-
-	use StdClassAdapter;
+class BaseTxnVO extends DynPropertiesClass {
 
 	/**
 	 * @return float
@@ -65,58 +63,58 @@ class BaseTxnVO {
 	}
 
 	/**
-	 * @param float $mVal
+	 * @param float $value
 	 * @return $this
 	 */
-	public function setAmount_Fee( $mVal ) {
-		$this->amount_fee = $mVal;
+	public function setAmount_Fee( $value ) :self {
+		$this->amount_fee = $value;
 		return $this;
 	}
 
 	/**
-	 * @param float $mVal
+	 * @param float $value
 	 * @return $this
 	 */
-	public function setAmount_Gross( $mVal ) {
-		$this->amount_gross = $mVal;
+	public function setAmount_Gross( $value ) :self {
+		$this->amount_gross = $value;
 		return $this;
 	}
 
 	/**
-	 * @param float $mVal
+	 * @param float $value
 	 * @return $this
 	 */
-	public function setAmount_Net( $mVal ) {
-		$this->amount_net = $mVal;
+	public function setAmount_Net( $value ) :self {
+		$this->amount_net = $value;
 		return $this;
 	}
 
 	/**
-	 * @param string $val
+	 * @param string $value
 	 * @return $this
 	 */
-	public function setCurrency( $val ) {
-		$this->currency = $val;
+	public function setCurrency( $value ) :self {
+		$this->currency = $value;
 		return $this;
 	}
 
 	/**
-	 * @param int $nVal
+	 * @param int $value
 	 * @return $this
 	 * @deprecated
 	 */
-	public function setDate( $nVal ) {
-		$this->date = $nVal;
+	public function setDate( $value ) :self {
+		$this->date = $value;
 		return $this;
 	}
 
 	/**
-	 * @param string $sVal
+	 * @param string $value
 	 * @return $this
 	 * @deprecated
 	 */
-	public function setId( $sVal ) {
-		$this->id = $sVal;
+	public function setId( $value ) :self {
+		$this->id = $value;
 		return $this;
 	}
 }
