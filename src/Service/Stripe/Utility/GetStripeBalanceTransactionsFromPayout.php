@@ -35,6 +35,7 @@ class GetStripeBalanceTransactionsFromPayout {
 				case 'charge':
 				case 'refund':
 				case 'payout_failure':
+				case 'transfer_failure':
 					$transactions[] = $balTxn;
 					$sanityTotal += $balTxn->net;
 					break;
