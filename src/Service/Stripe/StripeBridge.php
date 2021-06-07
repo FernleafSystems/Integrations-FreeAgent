@@ -32,8 +32,8 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 		$charge->gateway = 'stripe';
 		$charge->payment_terms = $this->getFreeagentConfigVO()->invoice_payment_terms;
 		return $charge->setAmount_Gross( bcdiv( $balanceTXN->amount, 100, 2 ) )
-					   ->setAmount_Fee( bcdiv( $balanceTXN->fee, 100, 2 ) )
-					   ->setAmount_Net( bcdiv( $balanceTXN->net, 100, 2 ) );
+					  ->setAmount_Fee( bcdiv( $balanceTXN->fee, 100, 2 ) )
+					  ->setAmount_Net( bcdiv( $balanceTXN->net, 100, 2 ) );
 	}
 
 	/**
@@ -89,7 +89,7 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 
 		$stripePayout = Payout::retrieve( $payoutID );
 
-		$nTotalPotentialDiff = 0;
+		$totalPotentialDiff = 0;
 		try {
 			foreach ( $this->getStripeBalanceTransactions( $stripePayout ) as $balTxn ) {
 				if ( $balTxn->type == 'charge' ) {
@@ -115,14 +115,14 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 				elseif ( $balTxn->type == 'adjustment' ) {
 					$payout->addAdjustment( $this->buildAdjustmentFromBalTxn( $balTxn ) );
 				}
-				elseif ( $balTxn->type == 'payout_failure' ) {
-					$nTotalPotentialDiff += $balTxn->net;
+				elseif ( in_array( $balTxn->type, [ 'payout_failure', 'transfer_failure' ] ) ) {
+					$totalPotentialDiff += $balTxn->net;
 				}
 			}
 		}
-		catch ( \Exception $oE ) {
-			var_dump( $oE->getMessage() );
-			error_log( $oE->getMessage() );
+		catch ( \Exception $e ) {
+			var_dump( $e->getMessage() );
+			error_log( $e->getMessage() );
 		}
 
 		/**
@@ -142,15 +142,15 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 		 * - Changed from getTotalNet() to getTotalGross() because Stripe stopped refunding fees.
 		 * - We then.
 		 */
-		$nTotalPayoutVO = bcsub(
+		$totalPayoutVO = bcsub(
 			bcmul( $payout->getTotalGross(), 100, 0 ),
 			bcmul( $payout->getTotalFee(), 100, 0 )
 		);
 
-		$nPayoutDiscrepancy = bcsub( $stripePayout->amount, $nTotalPayoutVO );
-		if ( $nPayoutDiscrepancy != 0 && bccomp( abs( $nPayoutDiscrepancy ), abs( $nTotalPotentialDiff ) ) ) {
+		$payoutDiscrepancy = bcsub( $stripePayout->amount, $totalPayoutVO );
+		if ( $payoutDiscrepancy != 0 && bccomp( abs( $payoutDiscrepancy ), abs( $totalPotentialDiff ) ) ) {
 			throw new \Exception( sprintf( 'PayoutVO total (%s) differs from Stripe total (%s). Discrepancy: %s',
-				$nTotalPayoutVO, $stripePayout->amount, $nPayoutDiscrepancy ) );
+				$totalPayoutVO, $stripePayout->amount, $payoutDiscrepancy ) );
 		}
 
 		$payout->date_arrival = $stripePayout->arrival_date;
