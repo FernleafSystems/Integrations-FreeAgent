@@ -15,17 +15,17 @@ abstract class PaypalBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 
 	/**
 	 * This needs to be extended to add the Invoice Item details.
-	 * @param string $sTxnID a Stripe Charge ID
+	 * @param string $chargeId a Stripe Charge ID
 	 * @return Freeagent\DataWrapper\ChargeVO
 	 * @throws \Exception
 	 */
-	public function buildChargeFromTransaction( $sTxnID ) {
+	public function buildChargeFromTransaction( $chargeId ) {
 		$charge = new Freeagent\DataWrapper\ChargeVO();
 
 		try {
-			$details = $this->getTxnChargeDetails( $sTxnID );
+			$details = $this->getTxnChargeDetails( $chargeId );
 
-			$charge->id = $sTxnID;
+			$charge->id = $chargeId;
 			$charge->currency = strtoupper( $details->GrossAmount->currencyID );
 			$charge->date = strtotime( $details->PaymentDate );
 			$charge->gateway = 'paypalexpress';
@@ -74,13 +74,13 @@ abstract class PaypalBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 	}
 
 	/**
-	 * @param string $sTxnID
+	 * @param string $txnID
 	 * @return \PayPal\EBLBaseComponents\PaymentInfoType
 	 * @throws \Exception
 	 */
-	protected function getTxnChargeDetails( $sTxnID ) {
+	protected function getTxnChargeDetails( $txnID ) {
 		$oReqType = new GetTransactionDetailsRequestType();
-		$oReqType->TransactionID = $sTxnID;
+		$oReqType->TransactionID = $txnID;
 
 		$oReq = new GetTransactionDetailsReq();
 		$oReq->GetTransactionDetailsRequest = $oReqType;

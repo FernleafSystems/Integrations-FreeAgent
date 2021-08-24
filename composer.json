@@ -17,7 +17,7 @@
   ],
   "require":      {
     "php":                                   ">=7.4",
-    "fernleafsystems/apiwrappers-freeagent": "~0.2.7",
+    "fernleafsystems/apiwrappers-freeagent": "~0.3",
     "paypal/merchant-sdk-php":               "~3.12",
     "stripe/stripe-php":                     "^7",
     "ultraleet/currency-rates":              "~1.2.0",

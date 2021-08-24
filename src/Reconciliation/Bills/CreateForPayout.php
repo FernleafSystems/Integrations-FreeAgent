@@ -4,82 +4,98 @@ namespace FernleafSystems\Integrations\Freeagent\Reconciliation\Bills;
 
 use FernleafSystems\ApiWrappers\Base\ConnectionConsumer;
 use FernleafSystems\ApiWrappers\Freeagent\Entities;
-use FernleafSystems\Integrations\Freeagent\Consumers;
+use FernleafSystems\ApiWrappers\Freeagent\Entities\Categories\CategoryVO;
+use FernleafSystems\Integrations\Freeagent\Consumers\{
+	FreeagentConfigVoConsumer,
+	PayoutVoConsumer
+};
 
-/**
- * Class CreateForPayout
- * @package FernleafSystems\Integrations\Freeagent\Reconciliation\Bills
- */
 class CreateForPayout {
 
-	use ConnectionConsumer,
-		Consumers\FreeagentConfigVoConsumer,
-		Consumers\PayoutVoConsumer;
+	use ConnectionConsumer;
+	use FreeagentConfigVoConsumer;
+	use PayoutVoConsumer;
 
 	/**
-	 * @return Entities\Bills\BillVO|null
 	 * @throws \Exception
 	 */
-	public function create() {
-		$oFaConfig = $this->getFreeagentConfigVO();
-		$oPayout = $this->getPayoutVO();
+	public function create() :Entities\Bills\BillVO {
+		$faConfig = $this->getFreeagentConfigVO();
+		$payout = $this->getPayoutVO();
 
-		$nTotalFees = $oPayout->getTotalFee();
-
-		$oBillContact = ( new Entities\Contacts\Retrieve() )
+		$billContact = ( new Entities\Contacts\Retrieve() )
 			->setConnection( $this->getConnection() )
-			->setEntityId( $oFaConfig->contact_id )
+			->setEntityId( $faConfig->contact_id )
 			->retrieve();
-		if ( empty( $oBillContact ) ) {
-			throw new \Exception( sprintf( 'Failed to load FreeAgent Contact bill for Payment processor with ID "%s" ', $oFaConfig->contact_id ) );
+		if ( empty( $billContact ) ) {
+			throw new \Exception( sprintf( 'Failed to load FreeAgent Contact bill for Payment processor with ID "%s" ', $faConfig->contact_id ) );
 		}
 
-		$aComments = [
-			sprintf( 'Bill for Payout: %s', $oPayout->id ),
-			sprintf( 'Payout Gross Amount: %s %s', $oPayout->currency, $oPayout->getTotalGross() ),
-			sprintf( 'Payout Fees Total: %s %s', $oPayout->currency, $nTotalFees ),
-			sprintf( 'Payout Net Amount: %s %s', $oPayout->currency, round( $oPayout->getTotalNet(), 2 ) )
-		];
+		$billItem = new Entities\Bills\Items\BillItemVO();
+		$billItem->description = $payout->id;
+		$billItem->total_value = $payout->getTotalFee();
+		$billItem->category = $this->getBillCategory()->url;
+		$billItem->sales_tax_rate = 0;
+		$billItem->sales_tax_status = $billItem::TAX_STATUS_EXEMPT;
 
-		$oBillCreator = ( new Entities\Bills\Create() )
+
+		$creator = ( new Entities\Bills\Create() )
 			->setConnection( $this->getConnection() )
-			->setContact( $oBillContact )
-			->setReference( $oPayout->id )
-			->setDatedOn( $oPayout->date_arrival )
-			->setDueOn( $oPayout->date_arrival )
-			->setCategoryId( $this->getFreeagentConfigVO()->bill_cat_id )
-			->setComment( implode( "\n", $aComments ) )
-			->setTotalValue( $nTotalFees )
-			->setCurrency( $oPayout->currency )
-			->setSalesTaxRate( 0 );
+			->addBillItem( $billItem )
+			->setContact( $billContact )
+			->setReference( $payout->id )
+			->setDatedOn( $payout->date_arrival )
+			->setDueOn( $payout->date_arrival )
+			->setComment( implode( "\n", [
+				sprintf( 'Bill for Payout: %s', $payout->id ),
+				sprintf( 'Payout Gross Amount: %s %s', $payout->currency, $payout->getTotalGross() ),
+				sprintf( 'Payout Fees Total: %s %s', $payout->currency, $payout->getTotalFee() ),
+				sprintf( 'Payout Net Amount: %s %s', $payout->currency, round( $payout->getTotalNet(), 2 ) )
+			] ) )
+//			->setTotalValue( $payout->getTotalFee() )
+//			->setSalesTaxRate( 0 )
+			->setCurrency( $payout->currency );
 
 		// TODO: This is a bit of a hack as no accounting for base account country.
-		if ( $this->isEuCountry( $oBillContact->country ) ) {
-			$oBillCreator->setEcStatus( 'EC Services' );
+		if ( $this->isEuCountry( $billContact->country ) ) {
+			$creator->setEcStatus( 'EC Services' );
 		}
 
-		$oBill = $oBillCreator->create();
+		$bill = $creator->create();
 
-		if ( empty( $oBill ) || empty( $oBill->getId() ) ) {
+		if ( empty( $bill ) || empty( $bill->getId() ) ) {
 			throw new \Exception( sprintf( 'Failed to create FreeAgent bill for Payout ID %s: %s ',
-				$oPayout->id, $oBillCreator->getLastErrorContent() ) );
+				$payout->id, $creator->getLastErrorContent() ) );
 		}
 
-		return $oBill;
+		return $bill;
 	}
 
 	/**
-	 * @param string $sCountry
+	 * @return CategoryVO
+	 * @throws \Exception
+	 */
+	private function getBillCategory() :CategoryVO {
+		$cat = ( new Entities\Categories\Retrieve() )
+			->setConnection( $this->getConnection() )
+			->setEntityId( $this->getFreeagentConfigVO()->bill_cat_id )
+			->retrieve();
+		if ( empty( $cat ) ) {
+			throw new \Exception( sprintf( 'Failed to retrieve FreeAgent Category for ID %s',
+				$this->getFreeagentConfigVO()->bill_cat_id ) );
+		}
+		return $cat;
+	}
+
+	/**
+	 * @param string $country
 	 * @return bool
 	 */
-	private function isEuCountry( $sCountry ) {
-		return in_array( strtolower( $sCountry ), array_map( 'strtolower', $this->getEuCountries() ) );
+	private function isEuCountry( $country ) :bool {
+		return in_array( strtolower( $country ), array_map( 'strtolower', $this->getEuCountries() ) );
 	}
 
-	/**
-	 * @return string[]
-	 */
-	private function getEuCountries() {
+	private function getEuCountries() :array {
 		return [
 			'Austria',
 			'Belgium',

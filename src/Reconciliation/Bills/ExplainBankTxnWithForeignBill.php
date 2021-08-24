@@ -14,10 +14,10 @@ use FernleafSystems\Integrations\Freeagent\Consumers;
  */
 class ExplainBankTxnWithForeignBill {
 
-	use Consumers\BankAccountVoConsumer,
-		Consumers\BankTransactionVoConsumer,
-		Consumers\PayoutVoConsumer,
-		ConnectionConsumer;
+	use ConnectionConsumer;
+	use Consumers\BankAccountVoConsumer;
+	use Consumers\BankTransactionVoConsumer;
+	use Consumers\PayoutVoConsumer;
 
 	/**
 	 * @param Bills\BillVO $oBill
