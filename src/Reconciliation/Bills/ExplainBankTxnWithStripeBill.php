@@ -14,10 +14,10 @@ use FernleafSystems\Integrations\Freeagent\Consumers;
  */
 class ExplainBankTxnWithStripeBill {
 
-	use Consumers\BankTransactionVoConsumer,
-		Consumers\FreeagentConfigVoConsumer,
-		Consumers\PayoutVoConsumer,
-		ConnectionConsumer;
+	use ConnectionConsumer;
+	use Consumers\BankTransactionVoConsumer;
+	use Consumers\FreeagentConfigVoConsumer;
+	use Consumers\PayoutVoConsumer;
 
 	/**
 	 * Determine whether we're working in our native currency, or whether
@@ -52,16 +52,16 @@ class ExplainBankTxnWithStripeBill {
 	}
 
 	/**
-	 * @param Entities\Bills\BillVO $oBill
+	 * @param Entities\Bills\BillVO $bill
 	 * @throws \Exception
 	 */
-	public function createSimpleExplanation( $oBill ) {
+	public function createSimpleExplanation( $bill ) {
 
 		$oBankTxnExp = ( new Entities\BankTransactionExplanation\Create() )
 			->setConnection( $this->getConnection() )
 			->setBankTxn( $this->getBankTransactionVo() )
-			->setBillPaid( $oBill )
-			->setValue( $oBill->total_value )
+			->setBillPaid( $bill )
+			->setValue( $bill->total_value )
 			->create();
 
 		if ( empty( $oBankTxnExp ) ) {

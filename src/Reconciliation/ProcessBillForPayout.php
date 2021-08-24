@@ -4,7 +4,12 @@ namespace FernleafSystems\Integrations\Freeagent\Reconciliation;
 
 use FernleafSystems\ApiWrappers\Base\ConnectionConsumer;
 use FernleafSystems\ApiWrappers\Freeagent\Entities;
-use FernleafSystems\Integrations\Freeagent\Consumers;
+use FernleafSystems\Integrations\Freeagent\Consumers\{
+	BankTransactionVoConsumer,
+	BridgeConsumer,
+	FreeagentConfigVoConsumer,
+	PayoutVoConsumer,
+};
 use FernleafSystems\Integrations\Freeagent\Reconciliation\Bills;
 
 /**
@@ -13,36 +18,36 @@ use FernleafSystems\Integrations\Freeagent\Reconciliation\Bills;
  */
 class ProcessBillForPayout {
 
-	use Consumers\BankTransactionVoConsumer,
-		Consumers\FreeagentConfigVoConsumer,
-		Consumers\PayoutVoConsumer,
-		Consumers\BridgeConsumer,
-		ConnectionConsumer;
+	use ConnectionConsumer;
+	use BankTransactionVoConsumer;
+	use BridgeConsumer;
+	use FreeagentConfigVoConsumer;
+	use PayoutVoConsumer;
 
 	/**
 	 * @throws \Exception
 	 */
 	public function run() {
-		$oPayout = $this->getPayoutVO();
+		$payout = $this->getPayoutVO();
 
 		$this->refreshBankTxn(); // We do this to ensure we have the latest working BankTxn;
 
-		$oBill = $this->retrieveExistingBill();
-		if ( empty( $oBill ) ) {
-			$oBill = ( new Bills\CreateForPayout() )
+		$bill = $this->retrieveExistingBill();
+		if ( empty( $bill ) ) {
+			$bill = ( new Bills\CreateForPayout() )
 				->setConnection( $this->getConnection() )
-				->setPayoutVO( $oPayout )
+				->setPayoutVO( $payout )
 				->setFreeagentConfigVO( $this->getFreeagentConfigVO() )
 				->create();
-			$this->getBridge()->storeExternalBillId( $oPayout, $oBill );
+			$this->getBridge()->storeExternalBillId( $payout, $bill );
 		}
 
 		( new Bills\ExplainBankTxnWithStripeBill() )
 			->setConnection( $this->getConnection() )
-			->setPayoutVO( $oPayout )
+			->setPayoutVO( $payout )
 			->setBankTransactionVo( $this->getBankTransactionVo() )
 			->setFreeagentConfigVO( $this->getFreeagentConfigVO() )
-			->process( $oBill );
+			->process( $bill );
 	}
 
 	/**
