@@ -13,6 +13,8 @@ abstract class PaypalBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 
 	use PayPal\Consumers\PaypalMerchantApiConsumer;
 
+	public const GATEWAY_SLUG = 'paypalexpress';
+
 	/**
 	 * This needs to be extended to add the Invoice Item details.
 	 * @param string $chargeId a Stripe Charge ID
@@ -23,16 +25,16 @@ abstract class PaypalBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 		$charge = new Freeagent\DataWrapper\ChargeVO();
 
 		try {
-			$details = $this->getTxnChargeDetails( $chargeId );
+			$txn = $this->getTxnChargeDetails( $chargeId );
 
 			$charge->id = $chargeId;
-			$charge->currency = strtoupper( $details->GrossAmount->currencyID );
-			$charge->date = strtotime( $details->PaymentDate );
-			$charge->gateway = 'paypalexpress';
+			$charge->currency = strtoupper( $txn->currency );
+			$charge->date = strtotime( $txn->time );
+			$charge->gateway = static::GATEWAY_SLUG;
 			$charge->payment_terms = $this->getFreeagentConfigVO()->invoice_payment_terms;
-			$charge->setAmount_Gross( $details->GrossAmount->value )
-				   ->setAmount_Fee( $details->FeeAmount->value )
-				   ->setAmount_Net( $details->GrossAmount->value - $details->FeeAmount->value );
+			$charge->setAmount_Gross( $txn->gross_value )
+				   ->setAmount_Fee( $txn->fee_value )
+				   ->setAmount_Net( $txn->net_value );
 		}
 		catch ( \Exception $e ) {
 		}
@@ -55,38 +57,68 @@ abstract class PaypalBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 	 * @return Freeagent\DataWrapper\PayoutVO
 	 */
 	public function buildPayoutFromId( $payoutID ) {
-		$oPayout = new Freeagent\DataWrapper\PayoutVO();
-		$oPayout->setId( $payoutID );
+		$payout = new Freeagent\DataWrapper\PayoutVO();
+		$payout->setId( $payoutID );
 
 		try {
-			$oDets = $this->getTxnChargeDetails( $payoutID );
-			$oPayout->date_arrival = strtotime( $oDets->PaymentDate );
-			$oPayout->currency = $oDets->GrossAmount->currencyID;
+			$txn = $this->getTxnChargeDetails( $payoutID );
+			$payout->date_arrival = strtotime( $txn->time );
+			$payout->currency = $txn->currency;
 
-			$oPayout->addCharge(
+			$payout->addCharge(
 				$this->buildChargeFromTransaction( $payoutID )
 			);
 		}
-		catch ( \Exception $oE ) {
+		catch ( \Exception $e ) {
 		}
 
-		return $oPayout;
+		return $payout;
 	}
 
 	/**
 	 * @param string $txnID
-	 * @return \PayPal\EBLBaseComponents\PaymentInfoType
+	 * @return TransactionVO
 	 * @throws \Exception
 	 */
 	protected function getTxnChargeDetails( $txnID ) {
-		$oReqType = new GetTransactionDetailsRequestType();
-		$oReqType->TransactionID = $txnID;
+		return $this->getTxnChargeDetailsLegacy( $txnID );
+	}
 
-		$oReq = new GetTransactionDetailsReq();
-		$oReq->GetTransactionDetailsRequest = $oReqType;
+	/**
+	 * @param string $txnID
+	 * @return TransactionVO
+	 * @throws \Exception
+	 */
+	protected function getTxnChargeDetailsLegacy( $txnID ) {
+		$reqType = new GetTransactionDetailsRequestType();
+		$reqType->TransactionID = $txnID;
 
-		return $this->getPaypalMerchantApi()
-					->api()
-					->GetTransactionDetails( $oReq )->PaymentTransactionDetails->PaymentInfo;
+		$req = new GetTransactionDetailsReq();
+		$req->GetTransactionDetailsRequest = $reqType;
+
+		$ppTxn = $this->getPaypalMerchantApi()
+					  ->api()
+					  ->GetTransactionDetails( $req )->PaymentTransactionDetails->PaymentInfo;
+
+		$txn = new TransactionVO();
+		$txn->id = $txnID;
+		$txn->status = $ppTxn->PaymentStatus;
+		$txn->time = $ppTxn->PaymentDate;
+		$txn->amount_with_breakdown = [
+			'gross_amount' => [
+				'currency_code' => $ppTxn->GrossAmount->currencyID,
+				'value'         => $ppTxn->GrossAmount->value
+			],
+			'fee_amount'   => [
+				'currency_code' => $ppTxn->FeeAmount->currencyID,
+				'value'         => $ppTxn->FeeAmount->value
+			],
+			'net_amount'   => [
+				'currency_code' => $ppTxn->GrossAmount->currencyID,
+				'value'         => bcsub( $ppTxn->GrossAmount->value, $ppTxn->FeeAmount->value, 2 )
+			],
+		];
+
+		return $txn;
 	}
 }
