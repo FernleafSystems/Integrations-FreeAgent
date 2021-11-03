@@ -6,15 +6,11 @@ use FernleafSystems\ApiWrappers\Base\ConnectionConsumer;
 use FernleafSystems\ApiWrappers\Freeagent\Entities;
 use FernleafSystems\Integrations\Freeagent\Consumers;
 
-/**
- * Class CreateForPayout
- * @package FernleafSystems\Integrations\Freeagent\Reconciliation\BankTransactions
- */
 class CreateForPayout {
 
-	use Consumers\BankAccountVoConsumer,
-		Consumers\PayoutVoConsumer,
-		ConnectionConsumer;
+	use ConnectionConsumer;
+	use Consumers\BankAccountVoConsumer;
+	use Consumers\PayoutVoConsumer;
 
 	/**
 	 * @return Entities\BankTransactions\BankTransactionVO|null
