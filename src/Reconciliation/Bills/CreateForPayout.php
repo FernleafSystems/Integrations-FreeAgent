@@ -35,9 +35,8 @@ class CreateForPayout {
 		$billItem->description = $payout->id;
 		$billItem->total_value = $payout->getTotalFee();
 		$billItem->category = $this->getBillCategory()->url;
-		$billItem->sales_tax_rate = 0;
-		$billItem->sales_tax_status = $billItem::TAX_STATUS_EXEMPT;
-
+		$billItem->sales_tax_rate = 'Auto';
+		$billItem->sales_tax_status = $billItem::TAX_STATUS_TAXABLE;
 
 		$creator = ( new Entities\Bills\Create() )
 			->setConnection( $this->getConnection() )
@@ -52,8 +51,6 @@ class CreateForPayout {
 				sprintf( 'Payout Fees Total: %s %s', $payout->currency, $payout->getTotalFee() ),
 				sprintf( 'Payout Net Amount: %s %s', $payout->currency, round( $payout->getTotalNet(), 2 ) )
 			] ) )
-//			->setTotalValue( $payout->getTotalFee() )
-//			->setSalesTaxRate( 0 )
 			->setCurrency( $payout->currency );
 
 		// TODO: This is a bit of a hack as no accounting for base account country.
@@ -72,7 +69,6 @@ class CreateForPayout {
 	}
 
 	/**
-	 * @return CategoryVO
 	 * @throws \Exception
 	 */
 	private function getBillCategory() :CategoryVO {
@@ -89,7 +85,6 @@ class CreateForPayout {
 
 	/**
 	 * @param string $country
-	 * @return bool
 	 */
 	private function isEuCountry( $country ) :bool {
 		return in_array( strtolower( $country ), array_map( 'strtolower', $this->getEuCountries() ) );
