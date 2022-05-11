@@ -31,30 +31,31 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 		$charge->date = $stripeCharge->created;
 		$charge->gateway = 'stripe';
 		$charge->payment_terms = $this->getFreeagentConfigVO()->invoice_payment_terms;
-		return $charge->setAmount_Gross( bcdiv( $balanceTXN->amount, 100, 2 ) )
-					  ->setAmount_Fee( bcdiv( $balanceTXN->fee, 100, 2 ) )
-					  ->setAmount_Net( bcdiv( $balanceTXN->net, 100, 2 ) );
+		$charge->amount_gross = bcdiv( $balanceTXN->amount, 100, 2 );
+		$charge->amount_fee = bcdiv( $balanceTXN->fee, 100, 2 );
+		$charge->amount_net = bcdiv( $balanceTXN->net, 100, 2 );
+		return $charge;
 	}
 
 	/**
 	 * This needs to be extended to add the Invoice Item details.
-	 * @param BalanceTransaction $balTxn a Stripe Refund ID
+	 * @param BalanceTransaction $balanceTXN a Stripe Refund ID
 	 * @return Freeagent\DataWrapper\AdjustmentVO
 	 * @throws \Exception
 	 */
-	public function buildAdjustmentFromBalTxn( BalanceTransaction $balTxn ) :Freeagent\DataWrapper\AdjustmentVO {
+	public function buildAdjustmentFromBalTxn( BalanceTransaction $balanceTXN ) :Freeagent\DataWrapper\AdjustmentVO {
 
 		$adj = new Freeagent\DataWrapper\AdjustmentVO();
-		if ( strpos( $balTxn->source, 'du_' ) === 0 ) {
+		if ( strpos( $balanceTXN->source, 'du_' ) === 0 ) {
 			$adj->type = 'dispute';
 		}
 
-		$adj->currency = $balTxn->currency;
-		$adj->date = $balTxn->created;
-
-		return $adj->setAmount_Gross( bcdiv( $balTxn->amount, 100, 2 ) )
-				   ->setAmount_Fee( bcdiv( $balTxn->fee, 100, 2 ) )
-				   ->setAmount_Net( bcdiv( $balTxn->net, 100, 2 ) );
+		$adj->currency = $balanceTXN->currency;
+		$adj->date = $balanceTXN->created;
+		$adj->amount_gross = bcdiv( $balanceTXN->amount, 100, 2 );
+		$adj->amount_fee = bcdiv( $balanceTXN->fee, 100, 2 );
+		$adj->amount_net = bcdiv( $balanceTXN->net, 100, 2 );
+		return $adj;
 	}
 
 	/**
@@ -66,16 +67,17 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 	public function buildRefundFromId( $refundID ) {
 		$refund = new Freeagent\DataWrapper\RefundVO();
 
-		$oStrRefund = Refund::retrieve( $refundID );
-		$balanceTXN = BalanceTransaction::retrieve( $oStrRefund->balance_transaction );
+		$stripeRefund = Refund::retrieve( $refundID );
+		$balanceTXN = BalanceTransaction::retrieve( $stripeRefund->balance_transaction );
 
 		$refund->id = $refundID;
-		$refund->currency = $oStrRefund->currency;
-		$refund->date = $oStrRefund->created;
+		$refund->currency = $stripeRefund->currency;
+		$refund->date = $stripeRefund->created;
 		$refund->gateway = 'stripe';
-		return $refund->setAmount_Gross( bcdiv( $balanceTXN->amount, 100, 2 ) )
-					  ->setAmount_Fee( bcdiv( $balanceTXN->fee, 100, 2 ) )
-					  ->setAmount_Net( bcdiv( $balanceTXN->net, 100, 2 ) );
+		$refund->amount_gross = bcdiv( $balanceTXN->amount, 100, 2 );
+		$refund->amount_fee = bcdiv( $balanceTXN->fee, 100, 2 );
+		$refund->amount_net = bcdiv( $balanceTXN->net, 100, 2 );
+		return $refund;
 	}
 
 	/**
