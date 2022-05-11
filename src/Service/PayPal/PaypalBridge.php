@@ -32,9 +32,9 @@ abstract class PaypalBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 			$charge->date = strtotime( $txn->time );
 			$charge->gateway = static::GATEWAY_SLUG;
 			$charge->payment_terms = $this->getFreeagentConfigVO()->invoice_payment_terms;
-			$charge->setAmount_Gross( $txn->gross_value )
-				   ->setAmount_Fee( $txn->fee_value )
-				   ->setAmount_Net( $txn->net_value );
+			$charge->amount_gross = bcdiv( $txn->gross_value, 100, 2 );
+			$charge->amount_fee = bcdiv( $txn->fee_value, 100, 2 );
+			$charge->amount_net = bcdiv( $txn->net_value, 100, 2 );
 		}
 		catch ( \Exception $e ) {
 		}
