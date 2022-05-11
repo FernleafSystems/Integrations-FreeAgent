@@ -5,8 +5,6 @@ namespace FernleafSystems\Integrations\Freeagent\DataWrapper;
 use FernleafSystems\Utilities\Data\Adapter\DynPropertiesClass;
 
 /**
- * Class FreeagentConfigVO
- * @package FernleafSystems\Integrations\Freeagent\DataWrapper
  * @property int  $bank_account_id_foreign
  * @property int  $bank_account_id_gbp
  * @property int  $bank_account_id_eur

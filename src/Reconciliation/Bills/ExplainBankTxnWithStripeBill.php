@@ -9,8 +9,6 @@ use FernleafSystems\Integrations\Freeagent\Consumers;
 /**
  * Retrieve the Stripe Bill within FreeAgent, and the associated Bank Transaction
  * for the Payout and creates a FreeAgent Explanation for it.
- * Class ExplainBankTxnWithStripeBill
- * @package FernleafSystems\Integrations\Freeagent\Reconciliation\Bills
  */
 class ExplainBankTxnWithStripeBill {
 
@@ -22,22 +20,22 @@ class ExplainBankTxnWithStripeBill {
 	/**
 	 * Determine whether we're working in our native currency, or whether
 	 * we have to explain the bill using our Foreign Bill handling.
-	 * @param Entities\Bills\BillVO $oBill
+	 * @param Entities\Bills\BillVO $bill
 	 * @throws \Exception
 	 */
-	public function process( $oBill ) {
-		if ( $oBill->due_value > 0 ) {
-			$oPO = $this->getPayoutVO();
+	public function process( $bill ) {
+		if ( $bill instanceof Entities\Bills\BillVO && $bill->due_value > 0 ) {
+			$PO = $this->getPayoutVO();
 
 			$bUseForeignCurrencyBill = $this->getFreeagentConfigVO()->foreign_currency_bills
-									   || ( strcasecmp( $oPO->currency, $this->getBaseCurrency() ) == 0 );
+									   || ( strcasecmp( $PO->currency, $this->getBaseCurrency() ) == 0 );
 			if ( $bUseForeignCurrencyBill ) {
-				$this->createSimpleExplanation( $oBill );
+				$this->createSimpleExplanation( $bill );
 			}
 			else {
 				// Uses a dedicated bank account as an intermediary for managing foreign currency bills
-				$oForeignBankAccount = $this->getForeignCurrencyBankAccount();
-				if ( is_null( $oForeignBankAccount ) ) {
+				$foreignCurrencyAccount = $this->getForeignCurrencyBankAccount();
+				if ( is_null( $foreignCurrencyAccount ) ) {
 					throw  new \Exception( 'Attempting to explain a foreign currency bill without a currency transfer account.' );
 				}
 
@@ -45,17 +43,16 @@ class ExplainBankTxnWithStripeBill {
 					->setPayoutVO( $this->getPayoutVO() )
 					->setConnection( $this->getConnection() )
 					->setBankTransactionVo( $this->getBankTransactionVo() )
-					->setBankAccountVo( $oForeignBankAccount )
-					->createExplanation( $oBill );
+					->setBankAccountVo( $foreignCurrencyAccount )
+					->createExplanation( $bill );
 			}
 		}
 	}
 
 	/**
-	 * @param Entities\Bills\BillVO $bill
 	 * @throws \Exception
 	 */
-	public function createSimpleExplanation( $bill ) {
+	public function createSimpleExplanation( Entities\Bills\BillVO $bill ) {
 
 		$oBankTxnExp = ( new Entities\BankTransactionExplanation\Create() )
 			->setConnection( $this->getConnection() )

@@ -5,11 +5,10 @@ namespace FernleafSystems\Integrations\Freeagent\DataWrapper;
 use FernleafSystems\Utilities\Data\Adapter\DynPropertiesClass;
 
 /**
- * Class BaseTxnVO
- * @package FernleafSystems\Integrations\Freeagent\DataWrapper
  * @property string $id
  * @property int    $amount_net
- * @property int    $amount_gross
+ * @property int    $amount_gross - before fees
+ * @property int    $amount_discount
  * @property int    $amount_fee
  * @property string $currency
  * @property int    $date
@@ -18,6 +17,7 @@ class BaseTxnVO extends DynPropertiesClass {
 
 	/**
 	 * @return float
+	 * @deprecated 1.1
 	 */
 	public function getAmount_Net() {
 		return $this->amount_net;
@@ -26,6 +26,7 @@ class BaseTxnVO extends DynPropertiesClass {
 	/**
 	 * This is not gross with taxes, but gross with payment processor fees
 	 * @return float
+	 * @deprecated 1.1
 	 */
 	public function getAmount_Gross() {
 		return $this->amount_gross;
@@ -33,6 +34,7 @@ class BaseTxnVO extends DynPropertiesClass {
 
 	/**
 	 * @return float
+	 * @deprecated 1.1
 	 */
 	public function getAmount_Fee() {
 		return $this->amount_fee;

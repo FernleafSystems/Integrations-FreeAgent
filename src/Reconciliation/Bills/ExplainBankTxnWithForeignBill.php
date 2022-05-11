@@ -8,10 +8,6 @@ use FernleafSystems\ApiWrappers\Freeagent\Entities\BankTransactions;
 use FernleafSystems\ApiWrappers\Freeagent\Entities\Bills;
 use FernleafSystems\Integrations\Freeagent\Consumers;
 
-/**
- * Class ExplainBankTxnWithForeignBill
- * @package FernleafSystems\Integrations\Freeagent\Reconciliation\Bills
- */
 class ExplainBankTxnWithForeignBill {
 
 	use ConnectionConsumer;
@@ -20,55 +16,49 @@ class ExplainBankTxnWithForeignBill {
 	use Consumers\PayoutVoConsumer;
 
 	/**
-	 * @param Bills\BillVO $oBill
-	 * @return bool
 	 * @throws \Exception
 	 */
-	public function createExplanation( $oBill ) {
-		$oBankTransferExplTxn = $this->createAccountTransferExplanation( $oBill );
-		$oLinkedTxn = $this->getNewLinkedBankTransferTransaction( $oBankTransferExplTxn );
-		$oUpdatedBill = $this->updateBillWithNewValue( $oBill, $oLinkedTxn->amount );
-		$this->createBillExplanation( $oUpdatedBill );
+	public function createExplanation( Bills\BillVO $bill ) :bool {
+		$bankXferExplanation = $this->createAccountTransferExplanation( $bill );
+		$linkedTxn = $this->getNewLinkedBankTransferTransaction( $bankXferExplanation );
+		$updatedBill = $this->updateBillWithNewValue( $bill, $linkedTxn->amount );
+		$this->createBillExplanation( $updatedBill );
 		return true;
 	}
 
 	/**
-	 * @param Bills\BillVO $oBill
-	 * @return BankTransactionExplanation\BankTransactionExplanationVO
 	 * @throws \Exception
 	 */
-	protected function createBillExplanation( $oBill ) {
-		$oExplanation = ( new BankTransactionExplanation\CreateManual() )
+	protected function createBillExplanation( Bills\BillVO $bill ) :BankTransactionExplanation\BankTransactionExplanationVO {
+		$exp = ( new BankTransactionExplanation\CreateManual() )
 			->setConnection( $this->getConnection() )
 			->setBankAccount( $this->getBankAccountVo() )
-			->setBillPaid( $oBill )
-			->setValue( $oBill->total_value )
-			->setDatedOn( $oBill->dated_on )
+			->setBillPaid( $bill )
+			->setValue( $bill->total_value )
+			->setDatedOn( $bill->dated_on )
 			->create();
-		if ( empty( $oExplanation ) ) {
+		if ( empty( $exp ) ) {
 			throw new \Exception( 'Creation of final foreign bill for Stripe failed' );
 		}
-		return $oExplanation;
+		return $exp;
 	}
 
 	/**
-	 * @param Bills\BillVO $oBill
-	 * @return BankTransactionExplanation\BankTransactionExplanationVO|null
 	 * @throws \Exception
 	 */
-	protected function createAccountTransferExplanation( $oBill ) {
+	protected function createAccountTransferExplanation( Bills\BillVO $bill ) :BankTransactionExplanation\BankTransactionExplanationVO {
 
-		$oBankTransferExplanationTxn = ( new BankTransactionExplanation\CreateTransferToAnotherAccount() )
+		$expl = ( new BankTransactionExplanation\CreateTransferToAnotherAccount() )
 			->setConnection( $this->getConnection() )
 			->setBankTxn( $this->getBankTransactionVo() )
 			->setTargetBankAccount( $this->getBankAccountVo() )
-			->setValue( -1*$oBill->total_value )// -1 as it's leaving the account
+			->setValue( -1*$bill->total_value )// -1 as it's leaving the account
 			->create();
-		if ( empty( $oBankTransferExplanationTxn ) ) {
+		if ( empty( $expl ) ) {
 			throw new \Exception( 'Failed to explain bank transfer transaction in FreeAgent.' );
 		}
 
-		return $oBankTransferExplanationTxn;
+		return $expl;
 	}
 
 	/**
@@ -87,23 +77,21 @@ class ExplainBankTxnWithForeignBill {
 	}
 
 	/**
-	 * @param Bills\BillVO $oBill
-	 * @param float        $nNewValue
-	 * @return Bills\BillVO|null
+	 * @param float $value
 	 * @throws \Exception
 	 */
-	protected function updateBillWithNewValue( $oBill, $nNewValue ) {
-		$oBill = ( new Bills\Update() )
+	protected function updateBillWithNewValue( Bills\BillVO $bill, $value ) :Bills\BillVO {
+		$bill = ( new Bills\Update() )
 			->setConnection( $this->getConnection() )
-			->setTotalValue( $nNewValue )
-			->setEntityId( $oBill->getId() )
+			->setTotalValue( $value )
+			->setEntityId( $bill->getId() )
 			->update();
-		if ( empty( $oBill ) ) {
+		if ( empty( $bill ) ) {
 			throw new \Exception( 'Failed to update Bill with new total value' );
 		}
 		return ( new Bills\Retrieve() )
 			->setConnection( $this->getConnection() )
-			->setEntityId( $oBill->getId() )
+			->setEntityId( $bill->getId() )
 			->sendRequestWithVoResponse();
 	}
 }

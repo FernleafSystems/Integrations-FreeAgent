@@ -5,8 +5,6 @@ namespace FernleafSystems\Integrations\Freeagent\DataWrapper;
 use FernleafSystems\Utilities\Data\Adapter\DynProperties;
 
 /**
- * Class PayoutVO
- * @package FernleafSystems\Integrations\Freeagent\DataWrapper
  * @property string         $id
  * @property string         $currency
  * @property string         $gateway

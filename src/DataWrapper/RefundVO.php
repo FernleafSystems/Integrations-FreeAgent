@@ -3,8 +3,6 @@
 namespace FernleafSystems\Integrations\Freeagent\DataWrapper;
 
 /**
- * Class RefundVO
- * @package FernleafSystems\Integrations\Freeagent\DataWrapper
  * @property string $gateway
  * @property string $charge_id
  */
