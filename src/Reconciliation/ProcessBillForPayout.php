@@ -12,10 +12,6 @@ use FernleafSystems\Integrations\Freeagent\Consumers\{
 };
 use FernleafSystems\Integrations\Freeagent\Reconciliation\Bills;
 
-/**
- * Class ProcessBillForPayout
- * @package FernleafSystems\Integrations\Freeagent\Reconciliation
- */
 class ProcessBillForPayout {
 
 	use ConnectionConsumer;
@@ -50,19 +46,16 @@ class ProcessBillForPayout {
 			->process( $bill );
 	}
 
-	/**
-	 * @return Entities\Bills\BillVO|null
-	 */
-	protected function retrieveExistingBill() {
-		$oBill = null;
-		$nExtBillId = $this->getBridge()->getExternalBillId( $this->getPayoutVO() );
-		if ( !empty( $nExtBillId ) ) {
-			$oBill = ( new Entities\Bills\Retrieve() )
+	protected function retrieveExistingBill() :?Entities\Bills\BillVO {
+		$bill = null;
+		$extBillID = $this->getBridge()->getExternalBillId( $this->getPayoutVO() );
+		if ( !empty( $extBillID ) ) {
+			$bill = ( new Entities\Bills\Retrieve() )
 				->setConnection( $this->getConnection() )
-				->setEntityId( $nExtBillId )
+				->setEntityId( $extBillID )
 				->retrieve();
 		}
-		return $oBill;
+		return $bill;
 	}
 
 	/**

@@ -7,10 +7,6 @@ use FernleafSystems\ApiWrappers\Freeagent\Entities;
 use FernleafSystems\Integrations\Freeagent\Consumers;
 use FernleafSystems\Integrations\Freeagent\Reconciliation;
 
-/**
- * Class ProcessStripePayout
- * @package FernleafSystems\Integrations\Freeagent\Reconciliation
- */
 class ProcessPayout {
 
 	use ConnectionConsumer;
@@ -22,13 +18,13 @@ class ProcessPayout {
 	 * - verify we can load the bank transaction (maybe create it automatically if not)
 	 * - reconcile stripe charges with freeagent invoices
 	 * - reconcile stripe fees with freeagent bill
-	 * @param string $sPayoutId
+	 * @param string $payoutID
 	 * @throws \Exception
 	 */
-	public function process( $sPayoutId ) {
+	public function process( $payoutID ) {
 		$bridge = $this->getBridge();
 		$conn = $this->getConnection();
-		$oPayout = $bridge->buildPayoutFromId( $sPayoutId );
+		$oPayout = $bridge->buildPayoutFromId( $payoutID );
 		$faCfg = $this->getFreeagentConfigVO();
 
 		$sBankId = $faCfg->getBankAccountIdForCurrency( $oPayout->getCurrency() );
