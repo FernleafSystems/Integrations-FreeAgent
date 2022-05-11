@@ -9,8 +9,6 @@ use FernleafSystems\Integrations\Freeagent\Reconciliation\Invoices;
 /**
  * Verifies all invoices associated with the payout are present and accurate within Freeagent
  * Then reconciles all local invoices/Stripe Charges with the exported invoices within Freeagent
- * Class StripeChargesWithFreeagentTransaction
- * @package iControlWP\Integration\FreeAgent\Reconciliation
  */
 class ProcessInvoicesForPayout {
 

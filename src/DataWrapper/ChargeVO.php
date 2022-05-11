@@ -3,8 +3,6 @@
 namespace FernleafSystems\Integrations\Freeagent\DataWrapper;
 
 /**
- * Class ChargeVO
- * @package FernleafSystems\Integrations\Freeagent\DataWrapper
  * @property string $gateway
  * @property string $item_name
  * @property string $country
