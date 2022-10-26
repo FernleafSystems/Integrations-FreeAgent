@@ -2,10 +2,6 @@
 
 namespace FernleafSystems\Integrations\Freeagent\Service\PayPal\Consumers;
 
-/**
- * Trait PaypalTxnConsumer
- * @package FernleafSystems\Integrations\Freeagent\Service\PayPal\Consumers
- */
 trait PaypalTxnConsumer {
 
 	/**

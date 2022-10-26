@@ -4,10 +4,6 @@ namespace FernleafSystems\Integrations\Freeagent\Service\PayPal\Consumers;
 
 use FernleafSystems\Integrations\Freeagent\Service\PayPal\DataWrapper\PaypalMerchantApi;
 
-/**
- * Trait PaypalMerchantApiConsumer
- * @package FernleafSystems\Integrations\Freeagent\Service\PayPal\Consumers
- */
 trait PaypalMerchantApiConsumer {
 
 	/**

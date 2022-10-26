@@ -4,10 +4,6 @@ namespace FernleafSystems\Integrations\Freeagent\Consumers;
 
 use FernleafSystems\Integrations\Freeagent\Reconciliation\Bridge\BridgeInterface;
 
-/**
- * Trait BridgeConsumer
- * @package FernleafSystems\Integrations\Freeagent\Consumers
- */
 trait BridgeConsumer {
 
 	/**

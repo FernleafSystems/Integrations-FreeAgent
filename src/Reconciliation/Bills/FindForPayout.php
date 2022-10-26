@@ -8,13 +8,11 @@ use FernleafSystems\Integrations\Freeagent\Consumers\PayoutVoConsumer;
 
 /**
  * TODO: INVALID
- * Class FindForPayout
- * @package FernleafSystems\Integrations\Freeagent\Reconciliation\Bills
  */
 class FindForPayout {
 
-	use ConnectionConsumer,
-		PayoutVoConsumer;
+	use ConnectionConsumer;
+	use PayoutVoConsumer;
 
 	/**
 	 * @return bool

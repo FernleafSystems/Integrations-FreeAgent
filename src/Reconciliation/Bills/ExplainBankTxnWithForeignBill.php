@@ -48,17 +48,17 @@ class ExplainBankTxnWithForeignBill {
 	 */
 	protected function createAccountTransferExplanation( Bills\BillVO $bill ) :BankTransactionExplanation\BankTransactionExplanationVO {
 
-		$expl = ( new BankTransactionExplanation\CreateTransferToAnotherAccount() )
+		$exp = ( new BankTransactionExplanation\CreateTransferToAnotherAccount() )
 			->setConnection( $this->getConnection() )
 			->setBankTxn( $this->getBankTransactionVo() )
 			->setTargetBankAccount( $this->getBankAccountVo() )
 			->setValue( -1*$bill->total_value )// -1 as it's leaving the account
 			->create();
-		if ( empty( $expl ) ) {
+		if ( empty( $exp ) ) {
 			throw new \Exception( 'Failed to explain bank transfer transaction in FreeAgent.' );
 		}
 
-		return $expl;
+		return $exp;
 	}
 
 	/**

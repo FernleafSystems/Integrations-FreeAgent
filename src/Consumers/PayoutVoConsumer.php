@@ -4,10 +4,6 @@ namespace FernleafSystems\Integrations\Freeagent\Consumers;
 
 use FernleafSystems\Integrations\Freeagent\DataWrapper;
 
-/**
- * Trait PayoutVoConsumer
- * @package FernleafSystems\Integrations\Freeagent\Consumers
- */
 trait PayoutVoConsumer {
 
 	/**

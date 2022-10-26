@@ -5,24 +5,18 @@ namespace FernleafSystems\Integrations\Freeagent\Reconciliation\BankTransactions
 use FernleafSystems\ApiWrappers\Base\ConnectionConsumer;
 use FernleafSystems\ApiWrappers\Freeagent\Entities;
 use FernleafSystems\Integrations\Freeagent\Consumers;
-use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
+use FernleafSystems\Utilities\Data\Adapter\DynPropertiesClass;
 
-/**
- * Class FindForPayout
- * @package FernleafSystems\Integrations\Freeagent\Reconciliation\BankTransactions
- */
-class FindForPayout {
+class FindForPayout extends DynPropertiesClass {
 
-	use Consumers\BankAccountVoConsumer,
-		Consumers\PayoutVoConsumer,
-		ConnectionConsumer,
-		StdClassAdapter;
+	use ConnectionConsumer;
+	use Consumers\BankAccountVoConsumer;
+	use Consumers\PayoutVoConsumer;
 
 	/**
-	 * @return Entities\BankTransactions\BankTransactionVO|null
 	 * @throws \Exception
 	 */
-	public function find() {
+	public function find() :?Entities\BankTransactions\BankTransactionVO {
 		return ( new Entities\BankTransactions\Finder() )
 			->setConnection( $this->getConnection() )
 			->filterByDateRange( $this->getPayoutVO()->date_arrival, 1 )

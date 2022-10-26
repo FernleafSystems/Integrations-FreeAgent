@@ -4,10 +4,6 @@ namespace FernleafSystems\Integrations\Freeagent\Consumers;
 
 use FernleafSystems\ApiWrappers\Freeagent\Entities\BankAccounts\BankAccountVO;
 
-/**
- * Trait BankAccountVoConsumer
- * @package FernleafSystems\Integrations\Freeagent\Consumers
- */
 trait BankAccountVoConsumer {
 
 	/**

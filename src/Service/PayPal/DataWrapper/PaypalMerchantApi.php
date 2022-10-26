@@ -6,8 +6,6 @@ use FernleafSystems\Utilities\Data\Adapter\DynProperties;
 use PayPal\Service\PayPalAPIInterfaceServiceService;
 
 /**
- * Class PaypalMerchantApi
- * @package FernleafSystems\Integrations\Freeagent\Service\PayPal\DataWrapper
  * @property array $api_config
  */
 class PaypalMerchantApi {
