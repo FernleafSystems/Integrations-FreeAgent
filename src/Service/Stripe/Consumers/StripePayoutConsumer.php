@@ -4,10 +4,6 @@ namespace FernleafSystems\Integrations\Freeagent\Service\Stripe\Consumers;
 
 use Stripe\Payout;
 
-/**
- * Trait StripePayoutConsumer
- * @package FernleafSystems\Integrations\Freeagent\Service\Stripe\Consumers
- */
 trait StripePayoutConsumer {
 
 	/**

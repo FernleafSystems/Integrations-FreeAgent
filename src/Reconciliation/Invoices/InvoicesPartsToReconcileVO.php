@@ -4,17 +4,13 @@ namespace FernleafSystems\Integrations\Freeagent\Reconciliation\Invoices;
 
 use FernleafSystems\ApiWrappers\Freeagent\Entities\Invoices\InvoiceVO;
 use FernleafSystems\Integrations\Freeagent\DataWrapper\ChargeVO;
-use FernleafSystems\Utilities\Data\Adapter\StdClassAdapter;
+use FernleafSystems\Utilities\Data\Adapter\DynPropertiesClass;
 
 /**
- * Class InvoicesPartsToReconcileVO
- * @package FernleafSystems\Integrations\Freeagent\Reconciliation\Invoices
  * @property InvoiceVO $external_invoice
  * @property ChargeVO  $charge
  */
-class InvoicesPartsToReconcileVO {
-
-	use StdClassAdapter;
+class InvoicesPartsToReconcileVO extends DynPropertiesClass {
 
 	/**
 	 * @return InvoiceVO

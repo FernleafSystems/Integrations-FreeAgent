@@ -18,7 +18,7 @@ class InvoicesVerify {
 	/**
 	 * @var Entities\Invoices\InvoiceVO[]
 	 */
-	private $aFreeagentInvoices;
+	private ?array $freeagentInvoices = null;
 
 	/**
 	 * Will return a collection of all invoices to be reconciled, or null if there
@@ -26,14 +26,10 @@ class InvoicesVerify {
 	 * @return InvoicesPartsToReconcileVO[]
 	 * @throws \Exception
 	 */
-	public function run() {
+	public function run() :array {
+		$bridge = $this->getBridge();
 
-		$oBridge = $this->getBridge();
-		$oPayout = $this->getPayoutVO();
-
-		$aFreeagentInvoicesPool = $this->getFreeagentInvoicesPool();
-
-		$oInvoiceCreator = ( new CreateFromCharge() )
+		$creator = ( new CreateFromCharge() )
 			->setBridge( $this->getBridge() )
 			->setConnection( $this->getConnection() )
 			->setFreeagentConfigVO( $this->getFreeagentConfigVO() );
@@ -41,51 +37,51 @@ class InvoicesVerify {
 		// Verify FreeAgent Invoice exists for each Stripe Balance Transaction
 		// that is represented in the Payout.
 		$nTxnCount = 0;
-		$aInvoicesToReconcile = [];
-		foreach ( $oPayout->getCharges() as $oCharge ) {
+		$invoicesToReconcile = [];
+		foreach ( $this->getPayoutVO()->getCharges() as $charge ) {
 
-			$oInvoiceToReconcile = null;
+			$invoiceToReconcile = null;
 
 			// We first check that we can build the link reliably between this ($oBalTxn)
 			// Stripe Balance Transaction, and the internal Payment (which links us to Freeagent)
-			$bValidLink = $oBridge->verifyInternalPaymentLink( $oCharge );
+			$bValidLink = $bridge->verifyInternalPaymentLink( $charge );
 			if ( !$bValidLink ) {
 				continue;
 			}
 
-			$nFreeagentInvoiceId = $oBridge->getFreeagentInvoiceId( $oCharge );
-			if ( !empty( $nFreeagentInvoiceId ) ) {
+			$freeagentInvoiceID = $bridge->getFreeagentInvoiceId( $charge );
+			if ( !empty( $freeagentInvoiceID ) ) {
 				// Verify we've been able to load it.
-				foreach ( $aFreeagentInvoicesPool as $oInvoice ) {
-					if ( $nFreeagentInvoiceId == $oInvoice->getId() ) {
-						$oInvoiceToReconcile = $oInvoice;
+				foreach ( $this->getFreeagentInvoicesPool() as $invoice ) {
+					if ( $freeagentInvoiceID == $invoice->getId() ) {
+						$invoiceToReconcile = $invoice;
 						break;
 					}
 				}
 			}
 
-			if ( is_null( $oInvoiceToReconcile ) ) { // No Invoice, so we create it.
-				$oNewInvoice = $oInvoiceCreator->setChargeVO( $oCharge )
-											   ->create();
-				if ( !empty( $oNewInvoice ) ) {
-					$oInvoiceToReconcile = $oNewInvoice;
+			if ( is_null( $invoiceToReconcile ) ) { // No Invoice, so we create it.
+				$newInvoice = $creator->setChargeVO( $charge )->create();
+				if ( !empty( $newInvoice ) ) {
+					$invoiceToReconcile = $newInvoice;
 				}
 			}
 
-			if ( !is_null( $oInvoiceToReconcile ) ) {
-				$aInvoicesToReconcile[] = ( new InvoicesPartsToReconcileVO() )
-					->setFreeagentInvoice( $oInvoiceToReconcile )
-					->setChargeVo( $oCharge );
+			if ( !is_null( $invoiceToReconcile ) ) {
+				$invoicePartToReconcile = new InvoicesPartsToReconcileVO();
+				$invoicePartToReconcile->external_invoice = $invoiceToReconcile;
+				$invoicePartToReconcile->charge = $charge;
+				$invoicesToReconcile[] = $invoicePartToReconcile;
 			}
 
 			$nTxnCount++;
 		}
 
-		if ( count( $aInvoicesToReconcile ) != $nTxnCount ) {
+		if ( count( $invoicesToReconcile ) != $nTxnCount ) {
 			throw new \Exception( 'The number of invoices to reconcile does not equal the Stripe TXN count.' );
 		}
 
-		return $aInvoicesToReconcile;
+		return $invoicesToReconcile;
 	}
 
 	/**
@@ -94,17 +90,17 @@ class InvoicesVerify {
 	 * @return Entities\Invoices\InvoiceVO[]
 	 */
 	protected function getFreeagentInvoicesPool() :array {
-		if ( !isset( $this->aFreeagentInvoices ) ) {
+		if ( !is_array( $this->freeagentInvoices ) ) {
+			$this->freeagentInvoices = [];
 
-			$oInvIt = new Entities\Invoices\InvoicesIterator();
-			$oInvIt->setConnection( $this->getConnection() )
-				   ->filterByOpenOverdue()
-				   ->filterByLastXMonths( 1 );
-			$this->aFreeagentInvoices = [];
-			foreach ( $oInvIt as $oInv ) {
-				$this->aFreeagentInvoices[] = $oInv;
+			$invoicesIT = new Entities\Invoices\InvoicesIterator();
+			$invoicesIT->setConnection( $this->getConnection() )
+					   ->filterByOpenOverdue()
+					   ->filterByLastXMonths(); // 1 month
+			foreach ( $invoicesIT as $invoice ) {
+				$this->freeagentInvoices[] = $invoice;
 			}
 		}
-		return $this->aFreeagentInvoices;
+		return $this->freeagentInvoices;
 	}
 }

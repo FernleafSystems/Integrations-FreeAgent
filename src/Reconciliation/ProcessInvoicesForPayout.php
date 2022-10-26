@@ -22,19 +22,18 @@ class ProcessInvoicesForPayout {
 	 * @throws \Exception
 	 */
 	public function run() {
-
-		$aReconInvoiceData = ( new Invoices\InvoicesVerify() )
-			->setConnection( $this->getConnection() )
-			->setBridge( $this->getBridge() )
-			->setFreeagentConfigVO( $this->getFreeagentConfigVO() )
-			->setPayoutVO( $this->getPayoutVO() )
-			->run();
-
 		( new Invoices\ExplainBankTxnWithInvoices() )
 			->setConnection( $this->getConnection() )
 			->setPayoutVO( $this->getPayoutVO() )
 			->setBridge( $this->getBridge() )
 			->setBankTransactionVo( $this->getBankTransactionVo() )
-			->run( $aReconInvoiceData );
+			->run(
+				( new Invoices\InvoicesVerify() )
+					->setConnection( $this->getConnection() )
+					->setBridge( $this->getBridge() )
+					->setFreeagentConfigVO( $this->getFreeagentConfigVO() )
+					->setPayoutVO( $this->getPayoutVO() )
+					->run()
+			);
 	}
 }

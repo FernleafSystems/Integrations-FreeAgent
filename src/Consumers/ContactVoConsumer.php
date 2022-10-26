@@ -4,10 +4,6 @@ namespace FernleafSystems\Integrations\Freeagent\Consumers;
 
 use FernleafSystems\ApiWrappers\Freeagent\Entities\Contacts\ContactVO;
 
-/**
- * Trait ContactVoConsumer
- * @package FernleafSystems\Integrations\Freeagent\Consumers
- */
 trait ContactVoConsumer {
 
 	/**

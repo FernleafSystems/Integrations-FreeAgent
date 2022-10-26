@@ -24,31 +24,31 @@ class ProcessPayout {
 	public function process( $payoutID ) {
 		$bridge = $this->getBridge();
 		$conn = $this->getConnection();
-		$oPayout = $bridge->buildPayoutFromId( $payoutID );
+		$payout = $bridge->buildPayoutFromId( $payoutID );
 		$faCfg = $this->getFreeagentConfigVO();
 
-		$sBankId = $faCfg->getBankAccountIdForCurrency( $oPayout->getCurrency() );
+		$sBankId = $faCfg->getBankAccountIdForCurrency( $payout->getCurrency() );
 		if ( empty( $sBankId ) ) {
-			throw new \Exception( sprintf( 'No bank account specified for currency "%s".', $oPayout->getCurrency() ) );
+			throw new \Exception( sprintf( 'No bank account specified for currency "%s".', $payout->getCurrency() ) );
 		}
 
-		$oBankAccount = ( new Entities\BankAccounts\Retrieve() )
+		$bankAccount = ( new Entities\BankAccounts\Retrieve() )
 			->setConnection( $conn )
 			->setEntityId( $sBankId )
 			->retrieve();
-		if ( empty( $oBankAccount ) ) {
+		if ( empty( $bankAccount ) ) {
 			throw new \Exception( sprintf( 'Could not retrieve bank account with ID "%s".', $sBankId ) );
 		}
 
 		$txn = null;
-		$nBankTxnId = $bridge->getExternalBankTxnId( $oPayout );
+		$nBankTxnId = $bridge->getExternalBankTxnId( $payout );
 		if ( !empty( $nBankTxnId ) ) {
 			$txn = ( new Entities\BankTransactions\Retrieve() )
 				->setConnection( $conn )
 				->setEntityId( $nBankTxnId )
 				->retrieve();
 			if ( $txn instanceof Entities\BankTransactions\BankTransactionVO
-				 && $txn->amount != $oPayout->getTotalNet() ) {
+				 && $txn->amount != $payout->getTotalNet() ) {
 				$txn = null; // useful if we're trying to correct something after the fact.
 			}
 		}
@@ -57,37 +57,37 @@ class ProcessPayout {
 		if ( empty( $txn ) && $faCfg->auto_locate_bank_txn ) {
 			$txn = ( new Reconciliation\BankTransactions\FindForPayout() )
 				->setConnection( $conn )
-				->setPayoutVO( $oPayout )
-				->setBankAccountVo( $oBankAccount )
+				->setPayoutVO( $payout )
+				->setBankAccountVo( $bankAccount )
 				->find();
 		}
 		if ( empty( $txn ) && $faCfg->auto_create_bank_txn ) {
 			$txn = ( new Reconciliation\BankTransactions\CreateForPayout() )
 				->setConnection( $conn )
-				->setPayoutVO( $oPayout )
-				->setBankAccountVo( $oBankAccount )
+				->setPayoutVO( $payout )
+				->setBankAccountVo( $bankAccount )
 				->create();
 		}
 
 		if ( empty( $txn ) ) {
-			throw new \Exception( sprintf( 'Bank Transaction does not exist for this Payout "%s".', $oPayout->id ) );
+			throw new \Exception( sprintf( 'Bank Transaction does not exist for this Payout "%s".', $payout->id ) );
 		}
 
-		$bridge->storeExternalBankTxnId( $oPayout, $txn );
+		$bridge->storeExternalBankTxnId( $payout, $txn );
 
 		// 1) Reconcile all the Invoices
 		( new Reconciliation\ProcessInvoicesForPayout() )
 			->setConnection( $conn )
 			->setBridge( $bridge )
 			->setFreeagentConfigVO( $faCfg )
-			->setPayoutVO( $oPayout )
+			->setPayoutVO( $payout )
 			->setBankTransactionVo( $txn )
 			->run();
 
 		// 2) Reconcile the Stripe Bill
 		( new Reconciliation\ProcessBillForPayout() )
 			->setConnection( $conn )
-			->setPayoutVO( $oPayout )
+			->setPayoutVO( $payout )
 			->setFreeagentConfigVO( $faCfg )
 			->setBankTransactionVo( $txn )
 			->setBridge( $bridge )

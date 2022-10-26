@@ -13,30 +13,29 @@ class CreateForPayout {
 	use Consumers\PayoutVoConsumer;
 
 	/**
-	 * @return Entities\BankTransactions\BankTransactionVO|null
 	 * @throws \Exception
 	 */
-	public function create() {
-		$oPayout = $this->getPayoutVO();
-		$bSuccess = ( new Entities\BankTransactions\Create() )
+	public function create() :?Entities\BankTransactions\BankTransactionVO {
+		$payout = $this->getPayoutVO();
+		$success = ( new Entities\BankTransactions\Create() )
 			->setConnection( $this->getConnection() )
 			->create(
 				$this->getBankAccountVo(),
-				$oPayout->date_arrival,
-				$oPayout->getTotalNet(),//$oPayout->amount/100
+				$payout->date_arrival,
+				$payout->getTotalNet(),//$payout->amount/100
 				sprintf( 'Automatically create bank transaction for %s Payout %s',
-					$oPayout->gateway, $oPayout->id )
+					$payout->gateway, $payout->id )
 			);
 
-		$oBankTxn = null;
-		if ( $bSuccess ) {
+		$bankTxn = null;
+		if ( $success ) {
 			sleep( 5 ); // to be extra sure it properly exists when we now try to find it.
-			$oBankTxn = ( new FindForPayout() )
+			$bankTxn = ( new FindForPayout() )
 				->setConnection( $this->getConnection() )
 				->setBankAccountVo( $this->getBankAccountVo() )
-				->setPayoutVO( $oPayout )
+				->setPayoutVO( $payout )
 				->find();
 		}
-		return $oBankTxn;
+		return $bankTxn;
 	}
 }

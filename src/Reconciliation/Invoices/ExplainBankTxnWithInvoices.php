@@ -15,75 +15,40 @@ class ExplainBankTxnWithInvoices {
 	use Consumers\PayoutVoConsumer;
 
 	/**
-	 * @param InvoicesPartsToReconcileVO[] $aInvoicesToReconcile
+	 * @param InvoicesPartsToReconcileVO[] $invoices
 	 */
-	public function run( $aInvoicesToReconcile ) {
+	public function run( array $invoices ) {
 		$conn = $this->getConnection();
-		$oPayout = $this->getPayoutVO();
-
-		$sBaseCurrency = $this->getBaseCurrency();
-		$sPayoutDatedOn = date( 'Y-m-d', $this->getPayoutVO()->date_arrival );
-		$oCurrencyEx = new CurrencyExchangeRates();
+		$payout = $this->getPayoutVO();
 
 		$bankTxn = $this->getBankTransactionVo();
 		/** @var Entities\BankAccounts\BankAccountVO $oBankAccount */
-		foreach ( $aInvoicesToReconcile as $oInvoiceItem ) {
+		foreach ( $invoices as $invoiceItem ) {
 
-			$invoice = $oInvoiceItem->external_invoice;
-			$oCharge = $oInvoiceItem->charge;
+			$invoice = $invoiceItem->external_invoice;
+			$charge = $invoiceItem->charge;
 
 			if ( (int)$invoice->due_value == 0 ) {
 				continue;
 			}
 
 			try {
-				$oCreator = ( new Entities\BankTransactionExplanation\Create() )
+				$creator = ( new Entities\BankTransactionExplanation\Create() )
 					->setConnection( $conn )
 					->setBankTxn( $bankTxn )
 					->setInvoicePaid( $invoice )
-					->setDatedOn( $sPayoutDatedOn )// also consider: $invoice->getDatedOn()
+					->setDatedOn( date( 'Y-m-d', $this->getPayoutVO()->date_arrival ) )// also consider: $invoice->getDatedOn()
 					->setValue( (string)$invoice->total_value );
 
-				$sChargeCurrency = $oCharge->currency;
+				$currencyCharge = $charge->currency;
 				// e.g. we're explaining a USD invoice using a transaction in GBP bank account
-				if ( strcasecmp( $sChargeCurrency, $oPayout->getCurrency() ) != 0 ) { //foreign currency converted by Stripe
-					$oCreator->setForeignCurrencyValue( $invoice->total_value );
-				}
-				else {
-					// We do some optimisation with unrealised currency gains/losses.
-					try {
-						$nInvoiceDateRate = $oCurrencyEx->lookup( $sBaseCurrency, $sChargeCurrency, $invoice->dated_on );
-						$nPayoutDateRate = $oCurrencyEx->lookup( $sBaseCurrency, $sChargeCurrency, $sPayoutDatedOn );
-
-						// if the target currency got stronger we'd have unrealised gains, so we negate
-						// them by changing the invoice creation date to be when we received the payout.
-						// TODO: Further investigate this and whether it's just shifting the gains
-						// and losses to the date of the invoice.
-						if ( false && $nInvoiceDateRate > $nPayoutDateRate ) {
-							( new Entities\Invoices\MarkAs() )
-								->setConnection( $conn )
-								->setEntityId( $invoice->getId() )
-								->draft();
-							sleep( 1 );
-							$invoice = ( new Entities\Invoices\Update() )
-								->setConnection( $conn )
-								->setEntityId( $invoice->getId() )
-								->setDatedOn( $sPayoutDatedOn )
-								->update();
-							sleep( 1 );
-							( new Entities\Invoices\MarkAs() )
-								->setConnection( $conn )
-								->setEntityId( $invoice->getId() )
-								->sent();
-						}
-					}
-					catch ( \Exception $oE ) {
-					}
+				if ( strcasecmp( $currencyCharge, $payout->getCurrency() ) != 0 ) { //foreign currency converted by Stripe
+					$creator->setForeignCurrencyValue( $invoice->total_value );
 				}
 
-				$oCreator->create();
+				$creator->create();
 			}
-			catch ( \Exception $oE ) {
+			catch ( \Exception $e ) {
 				continue;
 			}
 			//Store some meta in Payment / Charge?

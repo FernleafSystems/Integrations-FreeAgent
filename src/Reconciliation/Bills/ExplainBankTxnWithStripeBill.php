@@ -20,16 +20,15 @@ class ExplainBankTxnWithStripeBill {
 	/**
 	 * Determine whether we're working in our native currency, or whether
 	 * we have to explain the bill using our Foreign Bill handling.
-	 * @param Entities\Bills\BillVO $bill
 	 * @throws \Exception
 	 */
-	public function process( $bill ) {
-		if ( $bill instanceof Entities\Bills\BillVO && $bill->due_value > 0 ) {
+	public function process( Entities\Bills\BillVO $bill ) {
+		if ( $bill->due_value > 0 ) {
 			$PO = $this->getPayoutVO();
 
-			$bUseForeignCurrencyBill = $this->getFreeagentConfigVO()->foreign_currency_bills
-									   || ( strcasecmp( $PO->currency, $this->getBaseCurrency() ) == 0 );
-			if ( $bUseForeignCurrencyBill ) {
+			$useForeignCurrencyBill = $this->getFreeagentConfigVO()->foreign_currency_bills
+									  || ( strcasecmp( $PO->currency, $this->getBaseCurrency() ) == 0 );
+			if ( $useForeignCurrencyBill ) {
 				$this->createSimpleExplanation( $bill );
 			}
 			else {
@@ -54,14 +53,14 @@ class ExplainBankTxnWithStripeBill {
 	 */
 	public function createSimpleExplanation( Entities\Bills\BillVO $bill ) {
 
-		$oBankTxnExp = ( new Entities\BankTransactionExplanation\Create() )
+		$explanation = ( new Entities\BankTransactionExplanation\Create() )
 			->setConnection( $this->getConnection() )
 			->setBankTxn( $this->getBankTransactionVo() )
 			->setBillPaid( $bill )
 			->setValue( $bill->total_value )
 			->create();
 
-		if ( empty( $oBankTxnExp ) ) {
+		if ( empty( $explanation ) ) {
 			throw new \Exception( 'Failed to explain bank transaction with a bill in FreeAgent.' );
 		}
 	}
@@ -76,19 +75,16 @@ class ExplainBankTxnWithStripeBill {
 			->currency;
 	}
 
-	/**
-	 * @return Entities\BankAccounts\BankAccountVO|null
-	 */
-	protected function getForeignCurrencyBankAccount() {
-		$oForeignBankAccount = null;
+	protected function getForeignCurrencyBankAccount() :?Entities\BankAccounts\BankAccountVO {
+		$foreignBankAccount = null;
 
-		$nForeignBankAccountId = $this->getFreeagentConfigVO()->bank_account_id_foreign;
-		if ( !empty( $nForeignBankAccountId ) ) { // we retrieve it even though it may not be needed
-			$oForeignBankAccount = ( new Entities\BankAccounts\Retrieve() )
+		$bankAccountId = $this->getFreeagentConfigVO()->bank_account_id_foreign;
+		if ( !empty( $bankAccountId ) ) { // we retrieve it even though it may not be needed
+			$foreignBankAccount = ( new Entities\BankAccounts\Retrieve() )
 				->setConnection( $this->getConnection() )
-				->setEntityId( $nForeignBankAccountId )
+				->setEntityId( $bankAccountId )
 				->retrieve();
 		}
-		return $oForeignBankAccount;
+		return $foreignBankAccount;
 	}
 }

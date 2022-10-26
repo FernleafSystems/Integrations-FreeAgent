@@ -8,10 +8,6 @@ use Stripe\{
 	Collection
 };
 
-/**
- * Class GetStripeBalanceTransactionsFromPayout
- * @package FernleafSystems\Integrations\Freeagent\Service\Stripe\Utility
- */
 class GetStripeBalanceTransactionsFromPayout {
 
 	use Stripe\Consumers\StripePayoutConsumer;
