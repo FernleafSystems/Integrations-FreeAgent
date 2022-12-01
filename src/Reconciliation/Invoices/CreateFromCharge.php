@@ -14,7 +14,6 @@ class CreateFromCharge {
 	use Consumers\FreeagentConfigVoConsumer;
 
 	/**
-	 * @return Entities\Invoices\InvoiceVO|null
 	 * @throws \Exception
 	 */
 	public function create() :?Entities\Invoices\InvoiceVO {
@@ -39,7 +38,7 @@ class CreateFromCharge {
 			)
 			->addInvoiceItemVOs( $this->buildLineItemsFromCartItem() );
 
-		if ( $charge->isEuVatMoss() ) {
+		if ( $charge->is_vatmoss ) {
 			$creator->setEcStatusVatMoss()
 					->setEcPlaceOfSupply( $charge->country ?? $contact->country );
 		}
@@ -50,7 +49,7 @@ class CreateFromCharge {
 		$exportedInvoice = $creator->create();
 
 		if ( $exportedInvoice instanceof Entities\Invoices\InvoiceVO ) {
-			sleep( 2 );
+			sleep( 5 );
 			$exportedInvoice = $this->markInvoiceAsSent( $exportedInvoice );
 		}
 		else {
@@ -74,6 +73,7 @@ class CreateFromCharge {
 			->setConnection( $this->getConnection() )
 			->setEntityId( $invoice->getId() )
 			->sent();
+		sleep( 2 );
 		return ( new Entities\Invoices\Retrieve() )
 			->setConnection( $this->getConnection() )
 			->setEntityId( $invoice->getId() )

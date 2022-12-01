@@ -2,6 +2,8 @@
 
 namespace FernleafSystems\Integrations\Freeagent\DataWrapper;
 
+use FernleafSystems\ApiWrappers\Freeagent\Entities\Common\Constants;
+
 /**
  * @property string $gateway
  * @property string $item_name
@@ -22,12 +24,12 @@ class ChargeVO extends BaseTxnVO {
 		switch ( $key ) {
 			case 'is_vatmoss':
 				if ( is_null( $val ) ) {
-					$val = $this->ec_status === 'EC VAT MOSS';
+					$val = $this->ec_status === Constants::VAT_STATUS_EC_MOSS;
 				}
 				break;
 			case 'ec_status':
 				if ( is_null( $val ) ) {
-					$val = 'UK/Non-EC';
+					$val = Constants::VAT_STATUS_UK_NON_EC;
 				}
 				break;
 			default:
