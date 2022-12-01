@@ -55,7 +55,7 @@ class CreateForPayout {
 
 		// TODO: This is a bit of a hack as no accounting for base account country.
 		if ( $this->isEuCountry( $billContact->country ) ) {
-			$creator->setEcStatus( 'EC Services' );
+			$creator->setEcStatus( Entities\Common\Constants::VAT_STATUS_EC_SERVICES );
 		}
 
 		$bill = $creator->create();
