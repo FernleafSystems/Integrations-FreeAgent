@@ -1,4 +1,4 @@
-<?php
+<?php declare( strict_types=1 );
 
 namespace FernleafSystems\Integrations\Freeagent\Consumers;
 
@@ -6,24 +6,14 @@ use FernleafSystems\Integrations\Freeagent\DataWrapper\FreeagentConfigVO;
 
 trait FreeagentConfigVoConsumer {
 
-	/**
-	 * @var FreeagentConfigVO
-	 */
-	private $oFreeagentConfigVoConsumer;
+	private ?FreeagentConfigVO $faConfig = null;
 
-	/**
-	 * @return FreeagentConfigVO
-	 */
-	public function getFreeagentConfigVO() {
-		return $this->oFreeagentConfigVoConsumer;
+	public function getFreeagentConfigVO() :FreeagentConfigVO {
+		return $this->faConfig;
 	}
 
-	/**
-	 * @param FreeagentConfigVO $oVO
-	 * @return $this
-	 */
-	public function setFreeagentConfigVO( $oVO ) {
-		$this->oFreeagentConfigVoConsumer = $oVO;
+	public function setFreeagentConfigVO( FreeagentConfigVO $VO ) :self {
+		$this->faConfig = $VO;
 		return $this;
 	}
 }

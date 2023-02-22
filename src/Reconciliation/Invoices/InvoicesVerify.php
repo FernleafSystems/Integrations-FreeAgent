@@ -36,7 +36,7 @@ class InvoicesVerify {
 
 		// Verify FreeAgent Invoice exists for each Stripe Balance Transaction
 		// that is represented in the Payout.
-		$nTxnCount = 0;
+		$txnCount = 0;
 		$invoicesToReconcile = [];
 		foreach ( $this->getPayoutVO()->getCharges() as $charge ) {
 
@@ -44,8 +44,7 @@ class InvoicesVerify {
 
 			// We first check that we can build the link reliably between this ($oBalTxn)
 			// Stripe Balance Transaction, and the internal Payment (which links us to Freeagent)
-			$bValidLink = $bridge->verifyInternalPaymentLink( $charge );
-			if ( !$bValidLink ) {
+			if ( !$bridge->verifyInternalPaymentLink( $charge ) ) {
 				continue;
 			}
 
@@ -74,10 +73,10 @@ class InvoicesVerify {
 				$invoicesToReconcile[] = $invoicePartToReconcile;
 			}
 
-			$nTxnCount++;
+			$txnCount++;
 		}
 
-		if ( count( $invoicesToReconcile ) != $nTxnCount ) {
+		if ( count( $invoicesToReconcile ) != $txnCount ) {
 			throw new \Exception( 'The number of invoices to reconcile does not equal the Stripe TXN count.' );
 		}
 

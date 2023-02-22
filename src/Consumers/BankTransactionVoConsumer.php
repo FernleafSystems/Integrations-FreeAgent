@@ -1,4 +1,4 @@
-<?php
+<?php declare( strict_types=1 );
 
 namespace FernleafSystems\Integrations\Freeagent\Consumers;
 
@@ -6,24 +6,14 @@ use FernleafSystems\ApiWrappers\Freeagent\Entities\BankTransactions\BankTransact
 
 trait BankTransactionVoConsumer {
 
-	/**
-	 * @var BankTransactionVO
-	 */
-	private $oFreeagentBankTransactionVO;
+	private ?BankTransactionVO $faBankTxn = null;
 
-	/**
-	 * @return BankTransactionVO
-	 */
-	public function getBankTransactionVo() {
-		return $this->oFreeagentBankTransactionVO;
+	public function getBankTransactionVo() :BankTransactionVO {
+		return $this->faBankTxn;
 	}
 
-	/**
-	 * @param BankTransactionVO $oVo
-	 * @return $this
-	 */
-	public function setBankTransactionVo( $oVo ) {
-		$this->oFreeagentBankTransactionVO = $oVo;
+	public function setBankTransactionVo( BankTransactionVO $VO ) :self {
+		$this->faBankTxn = $VO;
 		return $this;
 	}
 }

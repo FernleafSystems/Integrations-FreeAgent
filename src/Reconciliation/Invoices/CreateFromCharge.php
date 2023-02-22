@@ -3,7 +3,7 @@
 namespace FernleafSystems\Integrations\Freeagent\Reconciliation\Invoices;
 
 use FernleafSystems\ApiWrappers\Base\ConnectionConsumer;
-use FernleafSystems\ApiWrappers\Freeagent\Entities;
+use FernleafSystems\ApiWrappers\Freeagent\Entities\Invoices;
 use FernleafSystems\Integrations\Freeagent\Consumers;
 
 class CreateFromCharge {
@@ -16,11 +16,11 @@ class CreateFromCharge {
 	/**
 	 * @throws \Exception
 	 */
-	public function create() :?Entities\Invoices\InvoiceVO {
+	public function create() :?Invoices\InvoiceVO {
 		$charge = $this->getChargeVO();
-		$contact = $this->getContact();
+		$contact = $this->getBridge()->createFreeagentContact( $this->getChargeVO() );
 
-		$creator = ( new Entities\Invoices\Create() )
+		$creator = ( new Invoices\Create() )
 			->setConnection( $this->getConnection() )
 			->setContact( $contact )
 			->setDatedOn( $charge->date )
@@ -48,7 +48,7 @@ class CreateFromCharge {
 
 		$exportedInvoice = $creator->create();
 
-		if ( $exportedInvoice instanceof Entities\Invoices\InvoiceVO ) {
+		if ( $exportedInvoice instanceof Invoices\InvoiceVO ) {
 			sleep( 5 );
 			$exportedInvoice = $this->markInvoiceAsSent( $exportedInvoice );
 		}
@@ -58,36 +58,31 @@ class CreateFromCharge {
 				$charge->id, $creator->getLastError()->getMessage() ) );
 		}
 
-		$this->getBridge()
-			 ->storeFreeagentInvoiceIdForCharge( $charge, $exportedInvoice );
+		$this->getBridge()->storeFreeagentInvoiceIdForCharge( $charge, $exportedInvoice );
 
 		return $exportedInvoice;
 	}
 
-	/**
-	 * @param Entities\Invoices\InvoiceVO $invoice
-	 * @return Entities\Invoices\InvoiceVO
-	 */
-	protected function markInvoiceAsSent( Entities\Invoices\InvoiceVO $invoice ) {
-		( new Entities\Invoices\MarkAs() )
+	protected function markInvoiceAsSent( Invoices\InvoiceVO $invoice ) :Invoices\InvoiceVO {
+		( new Invoices\MarkAs() )
 			->setConnection( $this->getConnection() )
 			->setEntityId( $invoice->getId() )
 			->sent();
 		sleep( 2 );
-		return ( new Entities\Invoices\Retrieve() )
+		return ( new Invoices\Retrieve() )
 			->setConnection( $this->getConnection() )
 			->setEntityId( $invoice->getId() )
 			->retrieve();
 	}
 
 	/**
-	 * @return Entities\Invoices\Items\InvoiceItemVO[]
+	 * @return Invoices\Items\InvoiceItemVO[]
 	 */
-	protected function buildLineItemsFromCartItem() {
+	protected function buildLineItemsFromCartItem() :array {
 		$invItems = [];
 		$charge = $this->getChargeVO();
 
-		$item = ( new Entities\Invoices\Items\InvoiceItemVO() )
+		$item = ( new Invoices\Items\InvoiceItemVO() )
 			->setType( $charge->getItemPeriodType() );
 		$item->description = $charge->item_name;
 		$item->quantity = $charge->getItemQuantity();
@@ -97,12 +92,5 @@ class CreateFromCharge {
 
 		$invItems[] = $item;
 		return $invItems;
-	}
-
-	/**
-	 * @return Entities\Contacts\ContactVO
-	 */
-	public function getContact() {
-		return $this->getBridge()->createFreeagentContact( $this->getChargeVO() );
 	}
 }

@@ -1,87 +1,44 @@
-<?php
+<?php declare( strict_types=1 );
 
 namespace FernleafSystems\Integrations\Freeagent\Reconciliation\Bridge;
 
-use FernleafSystems\ApiWrappers\Freeagent\Entities;
-use FernleafSystems\Integrations\Freeagent\DataWrapper;
+use FernleafSystems\ApiWrappers\Freeagent\Entities\{
+	BankTransactions\BankTransactionVO,
+	Bills\BillVO,
+	Contacts\ContactVO,
+	Invoices\InvoiceVO
+};
+use FernleafSystems\Integrations\Freeagent\DataWrapper\{
+	ChargeVO,
+	PayoutVO,
+	RefundVO
+};
 
 interface BridgeInterface {
 
-	const KEY_FREEAGENT_INVOICE_IDS = 'freeagent_invoice_ids';
+	public const KEY_FREEAGENT_INVOICE_IDS = 'freeagent_invoice_ids';
 
-	/**
-	 * @param string $chargeId
-	 * @return DataWrapper\ChargeVO
-	 */
-	public function buildChargeFromTransaction( $chargeId );
+	public function buildChargeFromTransaction( string $gatewayChargeID ) :ChargeVO;
 
-	/**
-	 * @param string $refundID
-	 * @return DataWrapper\RefundVO
-	 */
-	public function buildRefundFromId( $refundID );
+	public function buildRefundFromId( string $gatewayRefundID ) :?RefundVO;
 
-	/**
-	 * @param string $payoutID
-	 * @return DataWrapper\PayoutVO
-	 */
-	public function buildPayoutFromId( $payoutID );
+	public function buildPayoutFromId( string $payoutID ) :PayoutVO;
 
-	/**
-	 * @param DataWrapper\ChargeVO $oCharge
-	 * @param bool                 $bUpdateOnly
-	 * @return Entities\Contacts\ContactVO
-	 */
-	public function createFreeagentContact( $oCharge, $bUpdateOnly = false );
+	public function createFreeagentContact( ChargeVO $charge, bool $updateOnly = false ) :?ContactVO;
 
-	/**
-	 * @param DataWrapper\PayoutVO $oPayout
-	 * @return int|null
-	 */
-	public function getExternalBankTxnId( $oPayout );
+	public function getExternalBankTxnId( PayoutVO $payout ) :?string;
 
-	/**
-	 * @param DataWrapper\PayoutVO $oPayout
-	 * @return int|null
-	 */
-	public function getExternalBillId( $oPayout );
+	public function getExternalBillId( PayoutVO $payout ) :?string;
 
-	/**
-	 * @param DataWrapper\ChargeVO $oCharge
-	 * @return int
-	 */
-	public function getFreeagentContactId( $oCharge );
+	public function getFreeagentContactId( ChargeVO $charge ) :?int;
 
-	/**
-	 * @param DataWrapper\ChargeVO $oCharge
-	 * @return int
-	 */
-	public function getFreeagentInvoiceId( $oCharge );
+	public function getFreeagentInvoiceId( ChargeVO $charge ) :?int;
 
-	/**
-	 * @param DataWrapper\ChargeVO        $oCharge
-	 * @param Entities\Invoices\InvoiceVO $oInvoice
-	 * @return $this
-	 */
-	public function storeFreeagentInvoiceIdForCharge( $oCharge, $oInvoice );
+	public function storeFreeagentInvoiceIdForCharge( ChargeVO $charge, InvoiceVO $invoice ) :self;
 
-	/**
-	 * @param DataWrapper\PayoutVO                        $oPayout
-	 * @param Entities\BankTransactions\BankTransactionVO $oBankTxn
-	 * @return $this
-	 */
-	public function storeExternalBankTxnId( $oPayout, $oBankTxn );
+	public function storeExternalBankTxnId( PayoutVO $payout, BankTransactionVO $bankTxn ) :self;
 
-	/**
-	 * @param DataWrapper\PayoutVO  $oPayout
-	 * @param Entities\Bills\BillVO $oBill
-	 * @return $this
-	 */
-	public function storeExternalBillId( $oPayout, $oBill );
+	public function storeExternalBillId( PayoutVO $payout, BillVO $bill ) :self;
 
-	/**
-	 * @param DataWrapper\ChargeVO $oCharge
-	 * @return bool
-	 */
-	public function verifyInternalPaymentLink( $oCharge );
+	public function verifyInternalPaymentLink( ChargeVO $charge ) :bool;
 }

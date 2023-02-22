@@ -6,24 +6,14 @@ use Stripe\Payout;
 
 trait StripePayoutConsumer {
 
-	/**
-	 * @var Payout
-	 */
-	private $oStripePayout;
+	private ?Payout $stripePayout = null;
 
-	/**
-	 * @return Payout
-	 */
-	public function getStripePayout() {
-		return $this->oStripePayout;
+	public function getStripePayout() :Payout {
+		return $this->stripePayout;
 	}
 
-	/**
-	 * @param Payout $oPayout
-	 * @return $this
-	 */
-	public function setStripePayout( $oPayout ) {
-		$this->oStripePayout = $oPayout;
+	public function setStripePayout( Payout $payout ) :self {
+		$this->stripePayout = $payout;
 		return $this;
 	}
 }
