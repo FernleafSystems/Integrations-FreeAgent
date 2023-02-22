@@ -3,6 +3,8 @@
 namespace FernleafSystems\Integrations\Freeagent\Reconciliation\Invoices;
 
 use FernleafSystems\ApiWrappers\Base\ConnectionConsumer;
+use FernleafSystems\ApiWrappers\Freeagent\Entities\Common\Constants;
+use FernleafSystems\ApiWrappers\Freeagent\Entities\Contacts\ContactVO;
 use FernleafSystems\ApiWrappers\Freeagent\Entities\Invoices;
 use FernleafSystems\Integrations\Freeagent\Consumers;
 
@@ -38,6 +40,28 @@ class CreateFromCharge {
 			)
 			->addInvoiceItemVOs( $this->buildLineItemsFromCartItem() );
 
+		/**
+		 * We'll try to divine what the status should be if it's not already set.
+		 * Assumes UK-Based Freeagent Company
+		 */
+		if ( !isset( $charge->ec_status ) ) {
+
+			if ( $charge->item_taxrate > 0 ) {
+				if ( in_array( $contact->country, Constants::FREEAGENT_EU_COUNTRIES ) ) {
+					$charge->ec_status = Constants::VAT_STATUS_EC_MOSS;
+				}
+				else {
+					$charge->ec_status = Constants::VAT_STATUS_UK_NON_EC;
+				}
+			}
+			elseif ( in_array( $contact->country, Constants::FREEAGENT_EU_COUNTRIES ) ) {
+				$charge->ec_status = Constants::VAT_STATUS_REVERSE_CHARGE;
+			}
+			else {
+				$charge->ec_status = Constants::VAT_STATUS_UK_NON_EC;
+			}
+		}
+		
 		if ( $charge->is_vatmoss ) {
 			$creator->setEcStatusVatMoss()
 					->setEcPlaceOfSupply( $charge->country ?? $contact->country );

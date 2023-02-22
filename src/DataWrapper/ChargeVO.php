@@ -32,6 +32,12 @@ class ChargeVO extends BaseTxnVO {
 					$val = Constants::VAT_STATUS_UK_NON_EC;
 				}
 				break;
+			case 'item_taxrate':
+				if ( $val > 0 && $val < 1 ) {
+					$val *= 100;
+				}
+				$val = (int)abs( round( $val ) );
+				break;
 			default:
 				break;
 		}
