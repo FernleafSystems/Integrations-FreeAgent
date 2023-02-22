@@ -1,29 +1,19 @@
-<?php
+<?php declare( strict_types=1 );
 
 namespace FernleafSystems\Integrations\Freeagent\Consumers;
 
-use FernleafSystems\Integrations\Freeagent\DataWrapper;
+use FernleafSystems\Integrations\Freeagent\DataWrapper\ChargeVO;
 
 trait ChargeVoConsumer {
 
-	/**
-	 * @var DataWrapper\ChargeVO
-	 */
-	private $oChargeVo;
+	private ?ChargeVO $chargeVO = null;
 
-	/**
-	 * @return DataWrapper\ChargeVO
-	 */
-	public function getChargeVO() {
-		return $this->oChargeVo;
+	public function getChargeVO() :ChargeVO {
+		return $this->chargeVO;
 	}
 
-	/**
-	 * @param DataWrapper\ChargeVO $oVO
-	 * @return $this
-	 */
-	public function setChargeVO( $oVO ) {
-		$this->oChargeVo = $oVO;
+	public function setChargeVO( ChargeVO $VO ) :self {
+		$this->chargeVO = $VO;
 		return $this;
 	}
 }

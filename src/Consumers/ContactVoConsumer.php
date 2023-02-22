@@ -1,4 +1,4 @@
-<?php
+<?php declare( strict_types=1 );
 
 namespace FernleafSystems\Integrations\Freeagent\Consumers;
 
@@ -6,24 +6,14 @@ use FernleafSystems\ApiWrappers\Freeagent\Entities\Contacts\ContactVO;
 
 trait ContactVoConsumer {
 
-	/**
-	 * @var ContactVO
-	 */
-	private $oFreeagentContactVO;
+	private ?ContactVO $faContactVO = null;
 
-	/**
-	 * @return ContactVO
-	 */
-	public function getContactVo() {
-		return $this->oFreeagentContactVO;
+	public function getContactVo() :ContactVO {
+		return $this->faContactVO;
 	}
 
-	/**
-	 * @param ContactVO $oVo
-	 * @return $this
-	 */
-	public function setContactVo( $oVo ) {
-		$this->oFreeagentContactVO = $oVo;
+	public function setContactVo( ContactVO $VO ) :self {
+		$this->faContactVO = $VO;
 		return $this;
 	}
 }

@@ -24,14 +24,23 @@ class ChargeVO extends BaseTxnVO {
 		switch ( $key ) {
 			case 'is_vatmoss':
 				if ( is_null( $val ) ) {
-					$val = $this->ec_status === Constants::VAT_STATUS_EC_MOSS;
+					$val = is_null( $val ) ? $this->ec_status === Constants::VAT_STATUS_EC_MOSS : (bool)$val;
 				}
 				break;
+
 			case 'ec_status':
 				if ( is_null( $val ) ) {
 					$val = Constants::VAT_STATUS_UK_NON_EC;
 				}
 				break;
+
+			case 'item_taxrate':
+				if ( $val > 0 && $val < 1 ) {
+					$val *= 100;
+				}
+				$val = (int)abs( round( $val ) );
+				break;
+
 			default:
 				break;
 		}
@@ -97,25 +106,25 @@ class ChargeVO extends BaseTxnVO {
 		return (int)$this->payment_terms ?? 5;
 	}
 
+	/**
+	 * @deprecated 2.1.0
+	 */
 	public function isEuVatMoss() :bool {
 		return (bool)$this->is_vatmoss ?? false;
 	}
 
 	/**
-	 * @param string $value
-	 * @return $this
-	 * @deprecated
+	 * @deprecated 2.1.0
 	 */
-	public function setGateway( $value ) :self {
+	public function setGateway( string $value ) :self {
 		$this->gateway = $value;
 		return $this;
 	}
 
 	/**
-	 * @param bool $isMoss
-	 * @return $this
+	 * @deprecated 2.1.0
 	 */
-	public function setIsEuVatMoss( $isMoss ) :self {
+	public function setIsEuVatMoss( bool $isMoss ) :self {
 		$this->is_vatmoss = $isMoss;
 		return $this;
 	}

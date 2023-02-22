@@ -1,15 +1,20 @@
-<?php
+<?php declare( strict_types=1 );
 
 namespace FernleafSystems\Integrations\Freeagent\Service\PayPal;
 
-use FernleafSystems\Integrations\Freeagent;
+use FernleafSystems\Integrations\Freeagent\DataWrapper\{
+	ChargeVO,
+	PayoutVO,
+	RefundVO
+};
+use FernleafSystems\Integrations\Freeagent\Reconciliation\Bridge\StandardBridge;
 use FernleafSystems\Integrations\Freeagent\Service\PayPal;
 use PayPal\PayPalAPI\{
 	GetTransactionDetailsReq,
 	GetTransactionDetailsRequestType
 };
 
-abstract class PaypalBridge extends Freeagent\Reconciliation\Bridge\StandardBridge {
+abstract class PaypalBridge extends StandardBridge {
 
 	use PayPal\Consumers\PaypalMerchantApiConsumer;
 
@@ -17,17 +22,14 @@ abstract class PaypalBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 
 	/**
 	 * This needs to be extended to add the Invoice Item details.
-	 * @param string $chargeId a Stripe Charge ID
-	 * @return Freeagent\DataWrapper\ChargeVO
-	 * @throws \Exception
 	 */
-	public function buildChargeFromTransaction( $chargeId ) {
-		$charge = new Freeagent\DataWrapper\ChargeVO();
+	public function buildChargeFromTransaction( string $gatewayChargeID ) :ChargeVO {
+		$charge = new ChargeVO();
 
 		try {
-			$txn = $this->getTxnChargeDetails( $chargeId );
+			$txn = $this->getTxnChargeDetails( $gatewayChargeID );
 
-			$charge->id = $chargeId;
+			$charge->id = $gatewayChargeID;
 			$charge->currency = strtoupper( $txn->currency );
 			$charge->date = strtotime( $txn->time );
 			$charge->gateway = static::GATEWAY_SLUG;
@@ -44,20 +46,16 @@ abstract class PaypalBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 
 	/**
 	 * This isn't applicable to PayPal
-	 * @param string $refundID
-	 * @return Freeagent\DataWrapper\RefundVO
 	 */
-	public function buildRefundFromId( $refundID ) {
+	public function buildRefundFromId( string $gatewayRefundID ) :?RefundVO {
 		return null;
 	}
 
 	/**
 	 * With Paypal, the Transaction and the Payout are essentially the same thing.
-	 * @param string $payoutID
-	 * @return Freeagent\DataWrapper\PayoutVO
 	 */
-	public function buildPayoutFromId( $payoutID ) {
-		$payout = new Freeagent\DataWrapper\PayoutVO();
+	public function buildPayoutFromId( string $payoutID ) :PayoutVO {
+		$payout = new PayoutVO();
 		$payout->setId( $payoutID );
 
 		try {
@@ -76,20 +74,16 @@ abstract class PaypalBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 	}
 
 	/**
-	 * @param string $txnID
-	 * @return TransactionVO
 	 * @throws \Exception
 	 */
-	protected function getTxnChargeDetails( $txnID ) {
+	protected function getTxnChargeDetails( string $txnID ) :TransactionVO {
 		return $this->getTxnChargeDetailsLegacy( $txnID );
 	}
 
 	/**
-	 * @param string $txnID
-	 * @return TransactionVO
 	 * @throws \Exception
 	 */
-	protected function getTxnChargeDetailsLegacy( $txnID ) {
+	protected function getTxnChargeDetailsLegacy( string $txnID ) :TransactionVO {
 		$reqType = new GetTransactionDetailsRequestType();
 		$reqType->TransactionID = $txnID;
 

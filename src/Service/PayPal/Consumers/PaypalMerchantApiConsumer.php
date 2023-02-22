@@ -6,24 +6,21 @@ use FernleafSystems\Integrations\Freeagent\Service\PayPal\DataWrapper\PaypalMerc
 
 trait PaypalMerchantApiConsumer {
 
-	/**
-	 * @var PaypalMerchantApi
-	 */
-	private $oPaypalMerchantApi;
+	private ?PaypalMerchantApi $paypalMerchantApi = null;
 
 	/**
 	 * @return PaypalMerchantApi
 	 */
-	public function getPaypalMerchantApi() {
-		return $this->oPaypalMerchantApi;
+	public function getPaypalMerchantApi() :PaypalMerchantApi {
+		return $this->paypalMerchantApi;
 	}
 
 	/**
-	 * @param PaypalMerchantApi $oConfig
+	 * @param PaypalMerchantApi $api
 	 * @return $this
 	 */
-	public function setPaypalMerchantApi( $oConfig ) {
-		$this->oPaypalMerchantApi = $oConfig;
+	public function setPaypalMerchantApi( PaypalMerchantApi $api ) {
+		$this->paypalMerchantApi = $api;
 		return $this;
 	}
 }

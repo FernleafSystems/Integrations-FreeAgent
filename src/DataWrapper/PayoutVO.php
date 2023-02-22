@@ -99,10 +99,7 @@ class PayoutVO {
 		return $this->ext_bill_id;
 	}
 
-	/**
-	 * @return float
-	 */
-	public function getTotalGross() {
+	public function getTotalGross() :string {
 		return bcadd(
 			$this->getChargeTotalTally( 'amount_gross' ),
 			bcadd(
@@ -114,10 +111,7 @@ class PayoutVO {
 		);
 	}
 
-	/**
-	 * @return float
-	 */
-	public function getTotalFee() {
+	public function getTotalFee() :string {
 		return bcadd(
 			$this->getChargeTotalTally( 'amount_fee' ),
 			bcadd(

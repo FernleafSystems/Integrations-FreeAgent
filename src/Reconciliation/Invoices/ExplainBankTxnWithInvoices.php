@@ -5,7 +5,6 @@ namespace FernleafSystems\Integrations\Freeagent\Reconciliation\Invoices;
 use FernleafSystems\ApiWrappers\Base\ConnectionConsumer;
 use FernleafSystems\ApiWrappers\Freeagent\Entities;
 use FernleafSystems\Integrations\Freeagent\Consumers;
-use FernleafSystems\Integrations\Freeagent\Lookups\CurrencyExchangeRates;
 
 class ExplainBankTxnWithInvoices {
 
@@ -53,15 +52,5 @@ class ExplainBankTxnWithInvoices {
 			}
 			//Store some meta in Payment / Charge?
 		}
-	}
-
-	/**
-	 * @return string
-	 */
-	protected function getBaseCurrency() {
-		return ( new Entities\Company\Retrieve() )
-			->setConnection( $this->getConnection() )
-			->retrieve()
-			->currency;
 	}
 }

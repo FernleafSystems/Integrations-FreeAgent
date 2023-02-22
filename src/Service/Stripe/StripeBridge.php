@@ -1,8 +1,10 @@
-<?php
+<?php declare( strict_types=1 );
 
 namespace FernleafSystems\Integrations\Freeagent\Service\Stripe;
 
 use FernleafSystems\ApiWrappers\Freeagent\Entities;
+use FernleafSystems\ApiWrappers\Freeagent\Entities\BankTransactions\BankTransactionVO;
+use FernleafSystems\ApiWrappers\Freeagent\Entities\Bills\BillVO;
 use FernleafSystems\Integrations\Freeagent;
 use Stripe\{
 	BalanceTransaction,
@@ -11,82 +13,80 @@ use Stripe\{
 	Payout,
 	Refund
 };
+use FernleafSystems\Integrations\Freeagent\DataWrapper\{
+	AdjustmentVO,
+	ChargeVO,
+	PayoutVO,
+	RefundVO
+};
 
 abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBridge {
 
 	/**
 	 * This needs to be extended to add the Invoice Item details.
-	 * @param string $chargeId a Stripe Charge ID
-	 * @return Freeagent\DataWrapper\ChargeVO
 	 * @throws \Exception
 	 */
-	public function buildChargeFromTransaction( $chargeId ) {
-		$charge = new Freeagent\DataWrapper\ChargeVO();
+	public function buildChargeFromTransaction( string $gatewayChargeID ) :ChargeVO {
+		$charge = new ChargeVO();
 
-		$stripeCharge = Charge::retrieve( $chargeId );
+		$stripeCharge = Charge::retrieve( $gatewayChargeID );
 		$balanceTXN = BalanceTransaction::retrieve( $stripeCharge->balance_transaction );
 
-		$charge->id = $chargeId;
+		$charge->id = $gatewayChargeID;
 		$charge->currency = strtoupper( $stripeCharge->currency );
 		$charge->date = $stripeCharge->created;
 		$charge->gateway = 'stripe';
 		$charge->payment_terms = $this->getFreeagentConfigVO()->invoice_payment_terms;
-		$charge->amount_gross = bcdiv( $balanceTXN->amount, 100, 2 );
-		$charge->amount_fee = bcdiv( $balanceTXN->fee, 100, 2 );
-		$charge->amount_net = bcdiv( $balanceTXN->net, 100, 2 );
+		$charge->amount_gross = bcdiv( (string)$balanceTXN->amount, '100', 2 );
+		$charge->amount_fee = bcdiv( (string)$balanceTXN->fee, '100', 2 );
+		$charge->amount_net = bcdiv( (string)$balanceTXN->net, '100', 2 );
 		return $charge;
 	}
 
 	/**
 	 * This needs to be extended to add the Invoice Item details.
-	 * @param BalanceTransaction $balanceTXN a Stripe Refund ID
-	 * @return Freeagent\DataWrapper\AdjustmentVO
 	 * @throws \Exception
 	 */
-	public function buildAdjustmentFromBalTxn( BalanceTransaction $balanceTXN ) :Freeagent\DataWrapper\AdjustmentVO {
+	public function buildAdjustmentFromBalTxn( BalanceTransaction $balanceTXN ) :AdjustmentVO {
 
-		$adj = new Freeagent\DataWrapper\AdjustmentVO();
+		$adj = new AdjustmentVO();
 		if ( strpos( $balanceTXN->source, 'du_' ) === 0 ) {
 			$adj->type = 'dispute';
 		}
 
 		$adj->currency = $balanceTXN->currency;
 		$adj->date = $balanceTXN->created;
-		$adj->amount_gross = bcdiv( $balanceTXN->amount, 100, 2 );
-		$adj->amount_fee = bcdiv( $balanceTXN->fee, 100, 2 );
-		$adj->amount_net = bcdiv( $balanceTXN->net, 100, 2 );
+		$adj->amount_gross = bcdiv( (string)$balanceTXN->amount, '100', 2 );
+		$adj->amount_fee = bcdiv( (string)$balanceTXN->fee, '100', 2 );
+		$adj->amount_net = bcdiv( (string)$balanceTXN->net, '100', 2 );
 		return $adj;
 	}
 
 	/**
 	 * This needs to be extended to add the Invoice Item details.
-	 * @param string $refundID a Stripe Refund ID
-	 * @return Freeagent\DataWrapper\RefundVO
 	 * @throws \Exception
 	 */
-	public function buildRefundFromId( $refundID ) {
-		$refund = new Freeagent\DataWrapper\RefundVO();
+	public function buildRefundFromId( string $gatewayRefundID ) :?RefundVO {
 
-		$stripeRefund = Refund::retrieve( $refundID );
+		$stripeRefund = Refund::retrieve( $gatewayRefundID );
 		$balanceTXN = BalanceTransaction::retrieve( $stripeRefund->balance_transaction );
 
-		$refund->id = $refundID;
+		$refund = new RefundVO();
+		$refund->id = $gatewayRefundID;
 		$refund->currency = $stripeRefund->currency;
 		$refund->date = $stripeRefund->created;
 		$refund->gateway = 'stripe';
-		$refund->amount_gross = bcdiv( $balanceTXN->amount, 100, 2 );
-		$refund->amount_fee = bcdiv( $balanceTXN->fee, 100, 2 );
-		$refund->amount_net = bcdiv( $balanceTXN->net, 100, 2 );
+		$refund->amount_gross = bcdiv( (string)$balanceTXN->amount, '100', 2 );
+		$refund->amount_fee = bcdiv( (string)$balanceTXN->fee, '100', 2 );
+		$refund->amount_net = bcdiv( (string)$balanceTXN->net, '100', 2 );
 		return $refund;
 	}
 
 	/**
-	 * @param string $payoutID
-	 * @return Freeagent\DataWrapper\PayoutVO
 	 * @throws \Exception
 	 */
-	public function buildPayoutFromId( $payoutID ) {
-		$payout = new Freeagent\DataWrapper\PayoutVO();
+	public function buildPayoutFromId( string $payoutID ) :PayoutVO {
+		$payout = new PayoutVO();
 		$payout->setId( $payoutID );
 
 		$stripePayout = Payout::retrieve( $payoutID );
@@ -130,7 +130,7 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 		/**
 		 * 2019-11
 		 * We're handling here for failed payouts (due to TransferWise borderless account restrictions).
-		 * In the case where a refund is issued and it results in a "negative payment" because we don't have
+		 * In the case where a refund is issued, and it results in a "negative payment" because we don't have
 		 * sufficient funds within Stripe to cover it, it results in a "payout_failure" because TransferWise
 		 * doesn't support withdrawals.
 		 *
@@ -145,12 +145,13 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 		 * - We then.
 		 */
 		$totalPayoutVO = bcsub(
-			bcmul( $payout->getTotalGross(), 100, 0 ),
-			bcmul( $payout->getTotalFee(), 100, 0 )
+			bcmul( $payout->getTotalGross(), '100', 0 ),
+			bcmul( $payout->getTotalFee(), '100', 0 )
 		);
 
-		$payoutDiscrepancy = bcsub( $stripePayout->amount, $totalPayoutVO );
-		if ( $payoutDiscrepancy != 0 && bccomp( abs( $payoutDiscrepancy ), abs( $totalPotentialDiff ) ) ) {
+		$payoutDiscrepancy = (int)bcsub( (string)$stripePayout->amount, $totalPayoutVO );
+		if ( $payoutDiscrepancy !== 0
+			 && bccomp( (string)abs( $payoutDiscrepancy ), (string)abs( $totalPotentialDiff ) ) ) {
 			throw new \Exception( sprintf( 'PayoutVO total (%s) differs from Stripe total (%s). Discrepancy: %s',
 				$totalPayoutVO, $stripePayout->amount, $payoutDiscrepancy ) );
 		}
@@ -161,58 +162,39 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 	}
 
 	/**
-	 * @param Payout $oStripePayout
 	 * @return BalanceTransaction[]
 	 */
-	protected function getStripeBalanceTransactions( $oStripePayout ) {
+	protected function getStripeBalanceTransactions( Payout $stripePayout ) :array {
 		try {
-			$aBalTxns = ( new Utility\GetStripeBalanceTransactionsFromPayout() )
-				->setStripePayout( $oStripePayout )
+			$txn = ( new Utility\GetStripeBalanceTransactionsFromPayout() )
+				->setStripePayout( $stripePayout )
 				->retrieve();
 		}
-		catch ( \Exception $oE ) {
-			$aBalTxns = [];
+		catch ( \Exception $e ) {
+			$txn = [];
 		}
-		return $aBalTxns;
+		return $txn;
 	}
 
-	/**
-	 * @param Freeagent\DataWrapper\PayoutVO $oPayoutVO
-	 * @return int|null
-	 */
-	public function getExternalBankTxnId( $oPayoutVO ) {
-		return Payout::retrieve( $oPayoutVO->id )->metadata[ 'ext_bank_txn_id' ];
+	public function getExternalBankTxnId( PayoutVO $payout ) :?string {
+		return (string)Payout::retrieve( $payout->id )->metadata[ 'ext_bank_txn_id' ] ?? null;
 	}
 
-	/**
-	 * @param Freeagent\DataWrapper\PayoutVO $oPayoutVO
-	 * @return int|null
-	 */
-	public function getExternalBillId( $oPayoutVO ) {
-		return Payout::retrieve( $oPayoutVO->id )->metadata[ 'ext_bill_id' ];
+	public function getExternalBillId( PayoutVO $payout ) :?string {
+		return (string)Payout::retrieve( $payout->id )->metadata[ 'ext_bill_id' ] ?? null;
 	}
 
-	/**
-	 * @param Freeagent\DataWrapper\PayoutVO              $oPayoutVO
-	 * @param Entities\BankTransactions\BankTransactionVO $oBankTxn
-	 * @return $this
-	 */
-	public function storeExternalBankTxnId( $oPayoutVO, $oBankTxn ) {
-		$oStripePayout = Payout::retrieve( $oPayoutVO->id );
-		$oStripePayout->metadata[ 'ext_bank_txn_id' ] = $oBankTxn->getId();
-		$oStripePayout->save();
+	public function storeExternalBankTxnId( PayoutVO $payout, BankTransactionVO $bankTxn ) :self {
+		$stripePayout = Payout::retrieve( $payout->id );
+		$stripePayout->metadata[ 'ext_bank_txn_id' ] = $bankTxn->getId();
+		$stripePayout->save();
 		return $this;
 	}
 
-	/**
-	 * @param Freeagent\DataWrapper\PayoutVO $oPayoutVO
-	 * @param Entities\Bills\BillVO          $oBill
-	 * @return $this
-	 */
-	public function storeExternalBillId( $oPayoutVO, $oBill ) {
-		$oStripePayout = Payout::retrieve( $oPayoutVO->id );
-		$oStripePayout->metadata[ 'ext_bill_id' ] = $oBill->getId();
-		$oStripePayout->save();
+	public function storeExternalBillId( PayoutVO $payout, BillVO $bill ) :self {
+		$stripePayout = Payout::retrieve( $payout->id );
+		$stripePayout->metadata[ 'ext_bill_id' ] = $bill->getId();
+		$stripePayout->save();
 		return $this;
 	}
 }

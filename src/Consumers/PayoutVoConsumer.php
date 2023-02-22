@@ -1,29 +1,19 @@
-<?php
+<?php declare( strict_types=1 );
 
 namespace FernleafSystems\Integrations\Freeagent\Consumers;
 
-use FernleafSystems\Integrations\Freeagent\DataWrapper;
+use FernleafSystems\Integrations\Freeagent\DataWrapper\PayoutVO;
 
 trait PayoutVoConsumer {
 
-	/**
-	 * @var DataWrapper\PayoutVO
-	 */
-	private $oPayoutVo;
+	private ?PayoutVO $payoutVO = null;
 
-	/**
-	 * @return DataWrapper\PayoutVO
-	 */
-	public function getPayoutVO() {
-		return $this->oPayoutVo;
+	public function getPayoutVO() :PayoutVO {
+		return $this->payoutVO;
 	}
 
-	/**
-	 * @param DataWrapper\PayoutVO $oVO
-	 * @return $this
-	 */
-	public function setPayoutVO( $oVO ) {
-		$this->oPayoutVo = $oVO;
+	public function setPayoutVO( PayoutVO $VO ) :self {
+		$this->payoutVO = $VO;
 		return $this;
 	}
 }
