@@ -1,4 +1,4 @@
-<?php
+<?php declare( strict_types=1 );
 
 namespace FernleafSystems\Integrations\Freeagent\Verify;
 
@@ -31,7 +31,7 @@ class VerifyFreeagentConfig {
 		$contactVerifier = ( new Entities\Contacts\Retrieve() )
 			->setConnection( $conn )
 			->setEntityId( $faConf->contact_id );
-		if ( empty( $faConf->contact_id ) || !$contactVerifier->exists() ) {
+		if ( !isset( $faConf->contact_id ) || !$contactVerifier->exists() ) {
 			throw new \Exception( sprintf( 'Contact ID for bills could not be verified: "%s"', $faConf->contact_id ) );
 		}
 
