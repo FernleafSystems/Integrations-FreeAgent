@@ -130,7 +130,7 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 		/**
 		 * 2019-11
 		 * We're handling here for failed payouts (due to TransferWise borderless account restrictions).
-		 * In the case where a refund is issued and it results in a "negative payment" because we don't have
+		 * In the case where a refund is issued, and it results in a "negative payment" because we don't have
 		 * sufficient funds within Stripe to cover it, it results in a "payout_failure" because TransferWise
 		 * doesn't support withdrawals.
 		 *
@@ -166,14 +166,14 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 	 */
 	protected function getStripeBalanceTransactions( Payout $stripePayout ) :array {
 		try {
-			$txns = ( new Utility\GetStripeBalanceTransactionsFromPayout() )
+			$txn = ( new Utility\GetStripeBalanceTransactionsFromPayout() )
 				->setStripePayout( $stripePayout )
 				->retrieve();
 		}
 		catch ( \Exception $e ) {
-			$txns = [];
+			$txn = [];
 		}
-		return $txns;
+		return $txn;
 	}
 
 	public function getExternalBankTxnId( PayoutVO $payout ) :?string {

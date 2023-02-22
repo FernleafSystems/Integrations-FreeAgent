@@ -4,7 +4,6 @@ namespace FernleafSystems\Integrations\Freeagent\Reconciliation\Invoices;
 
 use FernleafSystems\ApiWrappers\Base\ConnectionConsumer;
 use FernleafSystems\ApiWrappers\Freeagent\Entities\Common\Constants;
-use FernleafSystems\ApiWrappers\Freeagent\Entities\Contacts\ContactVO;
 use FernleafSystems\ApiWrappers\Freeagent\Entities\Invoices;
 use FernleafSystems\Integrations\Freeagent\Consumers;
 
@@ -27,7 +26,6 @@ class CreateFromCharge {
 			->setContact( $contact )
 			->setDatedOn( $charge->date )
 			->setPaymentTerms( $charge->getPaymentTerms() )
-			->setExchangeRate( 1.0 )// TODO: Verify this perhaps with Txn
 			->setCurrency( $charge->currency )
 			->setComments(
 				serialize(
@@ -61,7 +59,7 @@ class CreateFromCharge {
 				$charge->ec_status = Constants::VAT_STATUS_UK_NON_EC;
 			}
 		}
-		
+
 		if ( $charge->is_vatmoss ) {
 			$creator->setEcStatusVatMoss()
 					->setEcPlaceOfSupply( $charge->country ?? $contact->country );
@@ -106,8 +104,7 @@ class CreateFromCharge {
 		$invItems = [];
 		$charge = $this->getChargeVO();
 
-		$item = ( new Invoices\Items\InvoiceItemVO() )
-			->setType( $charge->getItemPeriodType() );
+		$item = ( new Invoices\Items\InvoiceItemVO() )->setType( $charge->getItemPeriodType() );
 		$item->description = $charge->item_name;
 		$item->quantity = $charge->getItemQuantity();
 		$item->price = $charge->getItemSubtotal();
