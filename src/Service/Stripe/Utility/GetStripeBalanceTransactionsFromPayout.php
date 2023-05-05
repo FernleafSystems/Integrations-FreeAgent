@@ -16,7 +16,7 @@ class GetStripeBalanceTransactionsFromPayout {
 	 * @return BalanceTransaction[]
 	 * @throws \Exception
 	 */
-	public function retrieve() {
+	public function retrieve() :array {
 		$PO = $this->getStripePayout();
 
 		/** @var BalanceTransaction[] $transactions */
@@ -32,6 +32,7 @@ class GetStripeBalanceTransactionsFromPayout {
 				case 'refund':
 				case 'payout_failure':
 				case 'transfer_failure':
+				case 'stripe_fee':
 					$transactions[] = $balTxn;
 					$sanityTotal += $balTxn->net;
 					break;
