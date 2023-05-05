@@ -2,7 +2,7 @@
 
 namespace FernleafSystems\Integrations\Freeagent\DataWrapper;
 
-use FernleafSystems\Utilities\Data\Adapter\DynProperties;
+use FernleafSystems\Utilities\Data\Adapter\DynPropertiesClass;
 
 /**
  * @property string         $id
@@ -10,20 +10,38 @@ use FernleafSystems\Utilities\Data\Adapter\DynProperties;
  * @property string         $gateway
  * @property ChargeVO[]     $charges
  * @property RefundVO[]     $refunds
+ * @property GatewayFeeVO[] $gateway_fees
  * @property AdjustmentVO[] $adjustments
  * @property int            $date_arrival
  * @property int            $ext_bank_txn_id
  * @property int            $ext_bill_id
  */
-class PayoutVO {
+class PayoutVO extends DynPropertiesClass {
 
-	use DynProperties;
+	public function __get( string $key ) {
+		$value = parent::__get( $key );
+
+		switch ( $key ) {
+			case 'charges':
+			case 'refunds':
+			case 'gateway_fees':
+			case 'adjustments':
+				if ( !\is_array( $value ) ) {
+					$value = [];
+				}
+				break;
+			default:
+				break;
+		}
+
+		return $value;
+	}
 
 	/**
 	 * @param ChargeVO|RefundVO $item
 	 * @return $this
 	 */
-	public function addItem( $item ) {
+	public function addItem( $item ) :self {
 		if ( $item instanceof ChargeVO ) {
 			$this->addCharge( $item );
 		}
@@ -36,21 +54,17 @@ class PayoutVO {
 		return $this;
 	}
 
-	/**
-	 * @param ChargeVO $charge
-	 * @return $this
-	 */
-	public function addCharge( $charge ) {
-		if ( !$this->hasCharge( $charge ) ) {
-			$c = $this->getCharges();
-			$c[] = $charge;
-			$this->setCharges( $c );
+	public function addCharge( ChargeVO $charge ) :self {
+		$charges = $this->charges;
+		if ( !isset( $charges[ $charge->id ] ) ) {
+			$charges[ $charge->id ] = $charge;
+			$this->charges = $charges;
 		}
 		return $this;
 	}
 
 	public function addAdjustment( AdjustmentVO $adjustment ) :self {
-		$adjustments = $this->adjustments ?? [];
+		$adjustments = $this->adjustments;
 		if ( empty( $adjustments[ $adjustment->id ] ) ) {
 			$adjustments[ $adjustment->id ] = $adjustment;
 			$this->adjustments = $adjustments;
@@ -58,31 +72,22 @@ class PayoutVO {
 		return $this;
 	}
 
-	/**
-	 * @param RefundVO $oRefund
-	 * @return $this
-	 */
-	public function addRefund( $oRefund ) {
-		if ( !$this->hasRefund( $oRefund ) ) {
-			$r = $this->getRefunds();
-			$r[] = $oRefund;
-			$this->setRefunds( $r );
+	public function addRefund( RefundVO $refund ) :self {
+		$refunds = $this->refunds;
+		if ( !isset( $refunds[ $refund->id ] ) ) {
+			$refunds[ $refund->id ] = $refund;
+			$this->refunds = $refunds;
 		}
 		return $this;
 	}
 
-	/**
-	 * @return ChargeVO[]
-	 */
-	public function getCharges() {
-		return is_array( $this->charges ) ? $this->charges : [];
-	}
-
-	/**
-	 * @return RefundVO[]
-	 */
-	public function getRefunds() {
-		return is_array( $this->refunds ) ? $this->refunds : [];
+	public function addGatewayFee( GatewayFeeVO $fee ) :self {
+		$fees = $this->gateway_fees;
+		if ( !isset( $fees[ $fee->id ] ) ) {
+			$fees[ $fee->id ] = $fee;
+			$this->gateway_fees = $fees;
+		}
+		return $this;
 	}
 
 	/**
@@ -100,126 +105,36 @@ class PayoutVO {
 	}
 
 	public function getTotalGross() :string {
-		return bcadd(
-			$this->getChargeTotalTally( 'amount_gross' ),
-			bcadd(
-				$this->getRefundTotalTally( 'amount_gross' ),
-				$this->getAdjustmentsTotalTally( 'amount_gross' ),
-				2
-			),
-			2
-		);
+		return $this->bcAddMultiple( array_merge(
+			array_map( fn( $VO ) => $VO->amount_gross, $this->charges ),
+			array_map( fn( $VO ) => $VO->amount_gross, $this->refunds ),
+			array_map( fn( $VO ) => $VO->amount_gross, $this->adjustments ),
+		) );
 	}
 
 	public function getTotalFee() :string {
-		return bcadd(
-			$this->getChargeTotalTally( 'amount_fee' ),
-			bcadd(
-				$this->getRefundTotalTally( 'amount_fee' ),
-				$this->getAdjustmentsTotalTally( 'amount_fee' ),
-				2
-			),
+		return $this->bcAddMultiple( array_merge(
+			array_map( fn( $VO ) => $VO->amount_fee, $this->charges ),
+			array_map( fn( $VO ) => $VO->amount_fee, $this->refunds ),
+			array_map( fn( $VO ) => $VO->amount_fee, $this->adjustments ),
+			array_map( fn( $VO ) => $VO->amount, $this->gateway_fees ),
+		) );
+	}
+
+	/**
+	 * The supplementary gateway fees are "positive" values and are not taken from the charges' gross amounts.
+	 * So they must be subtracted separately from the total net.
+	 */
+	public function getTotalNet() :string {
+		return \bcsub(
+			$this->bcAddMultiple( array_merge(
+				\array_map( fn( $VO ) => $VO->amount_net, $this->charges ),
+				\array_map( fn( $VO ) => $VO->amount_net, $this->refunds ),
+				\array_map( fn( $VO ) => $VO->amount_net, $this->adjustments ),
+			) ),
+			$this->bcAddMultiple( array_map( fn( $VO ) => $VO->amount, $this->gateway_fees ) ),
 			2
 		);
-	}
-
-	/**
-	 * @return int
-	 */
-	public function getTotalNet() {
-		return bcadd(
-			$this->getChargeTotalTally( 'amount_net' ),
-			bcadd(
-				$this->getRefundTotalTally( 'amount_net' ),
-				$this->getAdjustmentsTotalTally( 'amount_net' ),
-				2
-			),
-			2
-		);
-	}
-
-	/**
-	 * @param string $key
-	 * @return float
-	 */
-	protected function getAdjustmentsTotalTally( string $key ) {
-		$total = 0;
-		foreach ( $this->adjustments ?? [] as $adj ) {
-			$total = bcadd( $total, $adj->{$key}, 2 );
-		}
-		return $total;
-	}
-
-	/**
-	 * @param string $key
-	 * @return float
-	 */
-	protected function getChargeTotalTally( string $key ) {
-		$total = 0;
-		foreach ( $this->charges ?? [] as $ch ) {
-			$total = bcadd( $total, $ch->{$key}, 2 );
-		}
-		return $total;
-	}
-
-	/**
-	 * @param string $key
-	 * @return float
-	 */
-	protected function getRefundTotalTally( string $key ) {
-		$total = 0;
-		foreach ( $this->refunds ?? [] as $ref ) {
-			$total = bcadd( $total, $ref->{$key}, 2 );
-		}
-		return $total;
-	}
-
-	/**
-	 * @param ChargeVO $oChargeVO
-	 * @return bool
-	 */
-	public function hasCharge( $oChargeVO ) {
-		$bExists = false;
-		foreach ( $this->getCharges() as $oCharge ) {
-			if ( $oCharge->id == $oChargeVO->id ) {
-				$bExists = true;
-				break;
-			}
-		}
-		return $bExists;
-	}
-
-	/**
-	 * @param RefundVO $refund
-	 * @return bool
-	 */
-	public function hasRefund( $refund ) :bool {
-		$exists = false;
-		foreach ( $this->getRefunds() as $r ) {
-			if ( $r->id == $refund->id ) {
-				$exists = true;
-				break;
-			}
-		}
-		return $exists;
-	}
-
-	/**
-	 * @param ChargeVO[] $charges
-	 * @return $this
-	 */
-	public function setCharges( array $charges ) :self {
-		$this->charges = $charges;
-		return $this;
-	}
-
-	/**
-	 * @param RefundVO[] $r
-	 * @return $this
-	 */
-	public function setRefunds( array $r ) :self {
-		$this->refunds = $r;
-		return $this;
 	}
 
 	/**
@@ -310,5 +225,13 @@ class PayoutVO {
 	 */
 	public function getExternalBankTxnId() {
 		return $this->ext_bank_txn_id;
+	}
+
+	private function bcAddMultiple( $toAdd ) :string {
+		$total = '0';
+		foreach ( $toAdd as $add ) {
+			$total = \bcadd( $total, $add, 2 );
+		}
+		return $total;
 	}
 }

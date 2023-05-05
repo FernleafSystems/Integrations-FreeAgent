@@ -37,9 +37,9 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 		$charge->date = $stripeCharge->created;
 		$charge->gateway = 'stripe';
 		$charge->payment_terms = $this->getFreeagentConfigVO()->invoice_payment_terms;
-		$charge->amount_gross = bcdiv( (string)$balanceTXN->amount, '100', 2 );
-		$charge->amount_fee = bcdiv( (string)$balanceTXN->fee, '100', 2 );
-		$charge->amount_net = bcdiv( (string)$balanceTXN->net, '100', 2 );
+		$charge->amount_gross = \bcdiv( (string)$balanceTXN->amount, '100', 2 );
+		$charge->amount_fee = \bcdiv( (string)$balanceTXN->fee, '100', 2 );
+		$charge->amount_net = \bcdiv( (string)$balanceTXN->net, '100', 2 );
 		return $charge;
 	}
 
@@ -56,9 +56,9 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 
 		$adj->currency = $balanceTXN->currency;
 		$adj->date = $balanceTXN->created;
-		$adj->amount_gross = bcdiv( (string)$balanceTXN->amount, '100', 2 );
-		$adj->amount_fee = bcdiv( (string)$balanceTXN->fee, '100', 2 );
-		$adj->amount_net = bcdiv( (string)$balanceTXN->net, '100', 2 );
+		$adj->amount_gross = \bcdiv( (string)$balanceTXN->amount, '100', 2 );
+		$adj->amount_fee = \bcdiv( (string)$balanceTXN->fee, '100', 2 );
+		$adj->amount_net = \bcdiv( (string)$balanceTXN->net, '100', 2 );
 		return $adj;
 	}
 
@@ -76,9 +76,9 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 		$refund->currency = $stripeRefund->currency;
 		$refund->date = $stripeRefund->created;
 		$refund->gateway = 'stripe';
-		$refund->amount_gross = bcdiv( (string)$balanceTXN->amount, '100', 2 );
-		$refund->amount_fee = bcdiv( (string)$balanceTXN->fee, '100', 2 );
-		$refund->amount_net = bcdiv( (string)$balanceTXN->net, '100', 2 );
+		$refund->amount_gross = \bcdiv( (string)$balanceTXN->amount, '100', 2 );
+		$refund->amount_fee = \bcdiv( (string)$balanceTXN->fee, '100', 2 );
+		$refund->amount_net = \bcdiv( (string)$balanceTXN->net, '100', 2 );
 		return $refund;
 	}
 
@@ -117,14 +117,29 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 				elseif ( $balTxn->type == 'adjustment' ) {
 					$payout->addAdjustment( $this->buildAdjustmentFromBalTxn( $balTxn ) );
 				}
-				elseif ( in_array( $balTxn->type, [ 'payout_failure', 'transfer_failure' ] ) ) {
+				elseif ( $balTxn->type === 'stripe_fee' ) {
+					/**
+					 * Stripe Fee objects come through with a -minus value in the 'amount'.
+					 * This differs in how we normally manage "fees" which are a component of a charge
+					 * and come through as positive amounts.
+					 * So we must apply a negative symbol during the normalisation of the 'amount'
+					 */
+					$payout->addGatewayFee(
+						( new Freeagent\DataWrapper\GatewayFeeVO() )->applyFromArray( [
+							'id'          => $balTxn->id,
+							'amount'      => \bcdiv( (string)$balTxn->amount, '-100', 2 ),
+							'description' => $balTxn->description,
+						] )
+					);
+				}
+				elseif ( \in_array( $balTxn->type, [ 'payout_failure', 'transfer_failure' ] ) ) {
 					$totalPotentialDiff += $balTxn->net;
 				}
 			}
 		}
 		catch ( \Exception $e ) {
-			var_dump( $e->getMessage() );
-			error_log( $e->getMessage() );
+			\var_dump( $e->getMessage() );
+			\error_log( $e->getMessage() );
 		}
 
 		/**
@@ -142,16 +157,15 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 		 *
 		 * 2020-05-13
 		 * - Changed from getTotalNet() to getTotalGross() because Stripe stopped refunding fees.
-		 * - We then.
 		 */
-		$totalPayoutVO = bcsub(
-			bcmul( $payout->getTotalGross(), '100', 0 ),
-			bcmul( $payout->getTotalFee(), '100', 0 )
+		$totalPayoutVO = \bcsub(
+			\bcmul( $payout->getTotalGross(), '100', 0 ),
+			\bcmul( $payout->getTotalFee(), '100', 0 )
 		);
 
-		$payoutDiscrepancy = (int)bcsub( (string)$stripePayout->amount, $totalPayoutVO );
+		$payoutDiscrepancy = (int)\bcsub( (string)$stripePayout->amount, $totalPayoutVO );
 		if ( $payoutDiscrepancy !== 0
-			 && bccomp( (string)abs( $payoutDiscrepancy ), (string)abs( $totalPotentialDiff ) ) ) {
+			 && \bccomp( (string)\abs( $payoutDiscrepancy ), (string)\abs( $totalPotentialDiff ) ) ) {
 			throw new \Exception( sprintf( 'PayoutVO total (%s) differs from Stripe total (%s). Discrepancy: %s',
 				$totalPayoutVO, $stripePayout->amount, $payoutDiscrepancy ) );
 		}
@@ -166,14 +180,14 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 	 */
 	protected function getStripeBalanceTransactions( Payout $stripePayout ) :array {
 		try {
-			$txn = ( new Utility\GetStripeBalanceTransactionsFromPayout() )
+			$TXNs = ( new Utility\GetStripeBalanceTransactionsFromPayout() )
 				->setStripePayout( $stripePayout )
 				->retrieve();
 		}
 		catch ( \Exception $e ) {
-			$txn = [];
+			$TXNs = [];
 		}
-		return $txn;
+		return $TXNs;
 	}
 
 	public function getExternalBankTxnId( PayoutVO $payout ) :?string {
