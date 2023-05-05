@@ -38,7 +38,7 @@ class InvoicesVerify {
 		// that is represented in the Payout.
 		$txnCount = 0;
 		$invoicesToReconcile = [];
-		foreach ( $this->getPayoutVO()->getCharges() as $charge ) {
+		foreach ( $this->getPayoutVO()->charges as $charge ) {
 
 			$invoiceToReconcile = null;
 
