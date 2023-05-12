@@ -94,7 +94,7 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 		$totalPotentialDiff = 0;
 		try {
 			foreach ( $this->getStripeBalanceTransactions( $stripePayout ) as $balTxn ) {
-				if ( $balTxn->type == 'charge' ) {
+				if ( \in_array( $balTxn->type, [ 'charge', 'payment' ] ) ) {
 					$payout->addCharge( $this->buildChargeFromTransaction( $balTxn->source ) );
 				}
 				elseif ( $balTxn->type == 'refund' ) {
@@ -185,6 +185,7 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 				->retrieve();
 		}
 		catch ( \Exception $e ) {
+			error_log( $e->getMessage() );
 			$TXNs = [];
 		}
 		return $TXNs;

@@ -32,12 +32,12 @@ class ExplainBankTxnWithInvoices {
 			}
 
 			try {
-				$creator = ( new Entities\BankTransactionExplanation\Create() )
-					->setConnection( $conn )
-					->setBankTxn( $bankTxn )
-					->setInvoicePaid( $invoice )
-					->setDatedOn( date( 'Y-m-d', $this->getPayoutVO()->date_arrival ) )// also consider: $invoice->getDatedOn()
-					->setValue( (string)$invoice->total_value );
+				$creator = new Entities\BankTransactionExplanation\Create();
+				$creator->setBankTxn( $bankTxn )
+						->setInvoicePaid( $invoice )
+						->setDatedOn( $bankTxn->dated_on )
+						->setValue( (string)$invoice->total_value )
+						->setConnection( $conn );
 
 				$currencyCharge = $charge->currency;
 				// e.g. we're explaining a USD invoice using a transaction in GBP bank account
@@ -48,6 +48,7 @@ class ExplainBankTxnWithInvoices {
 				$creator->create();
 			}
 			catch ( \Exception $e ) {
+				error_log( $e->getMessage() );
 				continue;
 			}
 			//Store some meta in Payment / Charge?
