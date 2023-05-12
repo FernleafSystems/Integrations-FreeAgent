@@ -33,10 +33,11 @@ class GetStripeBalanceTransactionsFromPayout {
 				case 'payout_failure':
 				case 'transfer_failure':
 				case 'stripe_fee':
+				case 'payment':
+					/** e.g. payment = Link payment */
 					$transactions[] = $balTxn;
 					$sanityTotal += $balTxn->net;
 					break;
-
 				case 'payout':
 				default:
 					break;
