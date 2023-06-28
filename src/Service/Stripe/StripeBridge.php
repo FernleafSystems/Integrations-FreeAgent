@@ -97,8 +97,8 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 				if ( \in_array( $balTxn->type, [ 'charge', 'payment' ] ) ) {
 					$payout->addCharge( $this->buildChargeFromTransaction( $balTxn->source ) );
 				}
-				elseif ( $balTxn->type == 'refund' ) {
-					if ( strpos( $balTxn->source, 'ch_' ) === 0 ) {
+				elseif ( \in_array( $balTxn->type, [ 'refund', 'payment_refund' ] ) ) {
+					if ( \strpos( $balTxn->source, 'ch_' ) === 0 ) {
 						$PI = PaymentIntent::retrieve(
 							Charge::retrieve( $balTxn->source )->payment_intent
 						);
