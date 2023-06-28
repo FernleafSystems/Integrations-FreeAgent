@@ -28,12 +28,17 @@ class GetStripeBalanceTransactionsFromPayout {
 
 			switch ( $balTxn->type ) {
 				case 'adjustment':
+
 				case 'charge':
+				case 'payment':
+
 				case 'refund':
+				case 'payment_refund':
+
 				case 'payout_failure':
 				case 'transfer_failure':
+
 				case 'stripe_fee':
-				case 'payment':
 					/** e.g. payment = Link payment */
 					$transactions[] = $balTxn;
 					$sanityTotal += $balTxn->net;
