@@ -103,10 +103,8 @@ abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBrid
 							Charge::retrieve( $balTxn->source )->payment_intent
 						);
 						foreach ( $PI->charges as $ch ) {
-							/** @var Charge $ch */
-							foreach ( $ch->refunds as $oRefund ) {
-								/** @var Refund $oRefund */
-								$payout->addRefund( $this->buildRefundFromId( $oRefund->id ) );
+							foreach ( $ch->refunds as $refund ) {
+								$payout->addRefund( $this->buildRefundFromId( $refund->id ) );
 							}
 						}
 					}
