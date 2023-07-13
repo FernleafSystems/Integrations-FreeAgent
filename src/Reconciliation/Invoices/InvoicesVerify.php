@@ -59,14 +59,14 @@ class InvoicesVerify {
 				}
 			}
 
-			if ( is_null( $invoiceToReconcile ) ) { // No Invoice, so we create it.
+			if ( $charge->local_payment_id > 0 && \is_null( $invoiceToReconcile ) ) { // No Invoice, so we create it.
 				$newInvoice = $creator->setChargeVO( $charge )->create();
 				if ( !empty( $newInvoice ) ) {
 					$invoiceToReconcile = $newInvoice;
 				}
 			}
 
-			if ( !is_null( $invoiceToReconcile ) ) {
+			if ( !\is_null( $invoiceToReconcile ) ) {
 				$invoicePartToReconcile = new InvoicesPartsToReconcileVO();
 				$invoicePartToReconcile->external_invoice = $invoiceToReconcile;
 				$invoicePartToReconcile->charge = $charge;
