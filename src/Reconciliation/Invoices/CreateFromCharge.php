@@ -25,12 +25,12 @@ class CreateFromCharge {
 			->setConnection( $this->getConnection() )
 			->setContact( $contact )
 			->setDatedOn( $charge->date )
-			->setPaymentTerms( $charge->getPaymentTerms() )
+			->setPaymentTerms( $charge->payment_terms ?? 10 )
 			->setCurrency( $charge->currency )
 			->setComments(
 				serialize(
 					[
-						'local_payment_id'  => $charge->getLocalPaymentId(),
+						'local_payment_id'  => $charge->local_payment_id ?? 0,
 						'gateway'           => $charge->gateway,
 						'gateway_charge_id' => $charge->id
 					]
@@ -104,11 +104,11 @@ class CreateFromCharge {
 		$invItems = [];
 		$charge = $this->getChargeVO();
 
-		$item = ( new Invoices\Items\InvoiceItemVO() )->setType( $charge->getItemPeriodType() );
+		$item = ( new Invoices\Items\InvoiceItemVO() )->setType( $charge->item_type );
 		$item->description = $charge->item_name;
-		$item->quantity = $charge->getItemQuantity();
-		$item->price = $charge->getItemSubtotal();
-		$item->sales_tax_rate = $charge->getItemTaxRate();
+		$item->quantity = $charge->item_quantity;
+		$item->price = $charge->item_subtotal;
+		$item->sales_tax_rate = $charge->item_taxrate;
 		$item->category = 'https://api.freeagent.com/v2/categories/'.$this->getFreeagentConfigVO()->invoice_item_cat_id;
 
 		$invItems[] = $item;
