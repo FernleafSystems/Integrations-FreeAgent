@@ -21,7 +21,8 @@ class CreateFromCharge {
 		$charge = $this->getChargeVO();
 		$contact = $this->getBridge()->createFreeagentContact( $this->getChargeVO() );
 
-		$creator = ( new Invoices\Create() )
+		$creator = new Invoices\Create();
+		$creator
 			->setConnection( $this->getConnection() )
 			->setContact( $contact )
 			->setDatedOn( $charge->date )
@@ -45,14 +46,10 @@ class CreateFromCharge {
 		if ( !isset( $charge->ec_status ) ) {
 
 			if ( $charge->item_taxrate > 0 ) {
-				if ( in_array( $contact->country, Constants::FREEAGENT_EU_COUNTRIES ) ) {
-					$charge->ec_status = Constants::VAT_STATUS_EC_MOSS;
-				}
-				else {
-					$charge->ec_status = Constants::VAT_STATUS_UK_NON_EC;
-				}
+				$charge->ec_status = Constants::FREEAGENT_EU_COUNTRIES[ $contact->country ] ?
+					Constants::VAT_STATUS_EC_MOSS : Constants::VAT_STATUS_UK_NON_EC;
 			}
-			elseif ( in_array( $contact->country, Constants::FREEAGENT_EU_COUNTRIES ) ) {
+			elseif ( \in_array( $contact->country, \array_keys( Constants::FREEAGENT_EU_COUNTRIES ) ) ) {
 				$charge->ec_status = Constants::VAT_STATUS_REVERSE_CHARGE;
 			}
 			else {
@@ -60,12 +57,9 @@ class CreateFromCharge {
 			}
 		}
 
+		$creator->setEcStatus( $charge->ec_status );
 		if ( $charge->is_vatmoss ) {
-			$creator->setEcStatusVatMoss()
-					->setEcPlaceOfSupply( $charge->country ?? $contact->country );
-		}
-		else {
-			$creator->setEcStatus( $charge->ec_status );
+			$creator->setEcPlaceOfSupply( $charge->country ?? $contact->country );
 		}
 
 		$exportedInvoice = $creator->create();
