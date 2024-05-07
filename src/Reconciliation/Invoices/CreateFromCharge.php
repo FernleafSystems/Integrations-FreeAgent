@@ -44,13 +44,8 @@ class CreateFromCharge {
 		 * Assumes UK-Based Freeagent Company
 		 */
 		if ( !isset( $charge->ec_status ) ) {
-
-			if ( $charge->item_taxrate > 0 ) {
-				$charge->ec_status = Constants::FREEAGENT_EU_COUNTRIES[ $contact->country ] ?
-					Constants::VAT_STATUS_EC_MOSS : Constants::VAT_STATUS_UK_NON_EC;
-			}
-			elseif ( \in_array( $contact->country, \array_keys( Constants::FREEAGENT_EU_COUNTRIES ) ) ) {
-				$charge->ec_status = Constants::VAT_STATUS_REVERSE_CHARGE;
+			if ( \in_array( $contact->country, \array_keys( Constants::FREEAGENT_EU_COUNTRIES ) ) ) {
+				$charge->ec_status = $charge->item_taxrate > 0 ? Constants::VAT_STATUS_EC_MOSS : Constants::VAT_STATUS_REVERSE_CHARGE;
 			}
 			else {
 				$charge->ec_status = Constants::VAT_STATUS_UK_NON_EC;
