@@ -4,7 +4,6 @@ namespace FernleafSystems\Integrations\Freeagent\Reconciliation;
 
 use FernleafSystems\ApiWrappers\Base\ConnectionConsumer;
 use FernleafSystems\Integrations\Freeagent\Consumers;
-use FernleafSystems\Integrations\Freeagent\Reconciliation\Invoices;
 
 /**
  * Verifies all invoices associated with the payout are present and accurate within Freeagent

@@ -23,21 +23,19 @@ class CreateFromCharge {
 
 		$creator = new Invoices\Create();
 		$creator
-			->setConnection( $this->getConnection() )
 			->setContact( $contact )
 			->setDatedOn( $charge->date )
 			->setPaymentTerms( $charge->payment_terms ?? 10 )
 			->setCurrency( $charge->currency )
 			->setComments(
-				serialize(
-					[
-						'local_payment_id'  => $charge->local_payment_id ?? 0,
-						'gateway'           => $charge->gateway,
-						'gateway_charge_id' => $charge->id
-					]
-				)
+				\serialize( [
+					'local_payment_id'  => $charge->local_payment_id ?? 0,
+					'gateway'           => $charge->gateway,
+					'gateway_charge_id' => $charge->id
+				] )
 			)
-			->addInvoiceItemVOs( $this->buildLineItemsFromCartItem() );
+			->addInvoiceItemVOs( $this->buildLineItemsFromCartItem() )
+			->setConnection( $this->getConnection() );
 
 		/**
 		 * We'll try to divine what the status should be if it's not already set.
@@ -60,7 +58,7 @@ class CreateFromCharge {
 		$exportedInvoice = $creator->create();
 
 		if ( $exportedInvoice instanceof Invoices\InvoiceVO ) {
-			sleep( 5 );
+			\sleep( 5 );
 			$exportedInvoice = $this->markInvoiceAsSent( $exportedInvoice );
 		}
 		else {
@@ -79,7 +77,7 @@ class CreateFromCharge {
 			->setConnection( $this->getConnection() )
 			->setEntityId( $invoice->getId() )
 			->sent();
-		sleep( 2 );
+		\sleep( 2 );
 		return ( new Invoices\Retrieve() )
 			->setConnection( $this->getConnection() )
 			->setEntityId( $invoice->getId() )
