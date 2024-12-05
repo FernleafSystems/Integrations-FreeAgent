@@ -47,7 +47,7 @@ class ChargeVO extends BaseTxnVO {
 				if ( $val > 0 && $val < 1 ) {
 					$val *= 100;
 				}
-				$val = (int)\abs( \round( $val ) );
+				$val = \abs( \round( $val, 2 ) );
 				break;
 			case 'item_type':
 				if ( empty( $val ) ) {
