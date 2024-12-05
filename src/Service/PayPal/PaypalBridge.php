@@ -60,12 +60,9 @@ abstract class PaypalBridge extends StandardBridge {
 
 		try {
 			$txn = $this->getTxnChargeDetails( $payoutID );
-			$payout->date_arrival = strtotime( $txn->time );
+			$payout->date_arrival = \strtotime( $txn->time );
 			$payout->currency = $txn->currency;
-
-			$payout->addCharge(
-				$this->buildChargeFromTransaction( $payoutID )
-			);
+			$payout->addCharge( $this->buildChargeFromTransaction( $payoutID ) );
 		}
 		catch ( \Exception $e ) {
 		}

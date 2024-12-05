@@ -24,7 +24,7 @@ class PaypalMerchantApi {
 	 * @deprecated
 	 */
 	public function getConfig() :array {
-		return is_array( $this->api_config ) ? $this->api_config : [];
+		return \is_array( $this->api_config ) ? $this->api_config : [];
 	}
 
 	/**

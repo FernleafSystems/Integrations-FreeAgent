@@ -29,7 +29,7 @@ class CreateForPayout {
 
 		$bankTxn = null;
 		if ( $success ) {
-			sleep( 5 ); // to be extra sure it properly exists when we now try to find it.
+			\sleep( 5 ); // to be extra sure it properly exists when we now try to find it.
 			$bankTxn = ( new FindForPayout() )
 				->setConnection( $this->getConnection() )
 				->setBankAccountVo( $this->getBankAccountVo() )

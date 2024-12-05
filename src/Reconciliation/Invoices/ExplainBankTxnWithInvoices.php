@@ -41,7 +41,7 @@ class ExplainBankTxnWithInvoices {
 
 				$currencyCharge = $charge->currency;
 				// e.g. we're explaining a USD invoice using a transaction in GBP bank account
-				if ( strcasecmp( $currencyCharge, $payout->getCurrency() ) != 0 ) { //foreign currency converted by Stripe
+				if ( \strcasecmp( $currencyCharge, $payout->getCurrency() ) != 0 ) { //foreign currency converted by Stripe
 					$creator->setForeignCurrencyValue( $invoice->total_value );
 				}
 

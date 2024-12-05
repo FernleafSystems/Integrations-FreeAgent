@@ -76,7 +76,7 @@ class InvoicesVerify {
 			$txnCount++;
 		}
 
-		if ( count( $invoicesToReconcile ) != $txnCount ) {
+		if ( \count( $invoicesToReconcile ) != $txnCount ) {
 			throw new \Exception( 'The number of invoices to reconcile does not equal the Stripe TXN count.' );
 		}
 
@@ -89,7 +89,7 @@ class InvoicesVerify {
 	 * @return Entities\Invoices\InvoiceVO[]
 	 */
 	protected function getFreeagentInvoicesPool() :array {
-		if ( !is_array( $this->freeagentInvoices ) ) {
+		if ( !\is_array( $this->freeagentInvoices ) ) {
 			$this->freeagentInvoices = [];
 
 			$invoicesIT = new Entities\Invoices\InvoicesIterator();
