@@ -38,7 +38,7 @@ class TransactionVO extends DynPropertiesClass {
 				$value = $this->amount_with_breakdown[ 'gross_amount' ][ 'currency_code' ];
 				break;
 			case 'ts':
-				$value = strtotime( $this->time );
+				$value = \strtotime( $this->time );
 				break;
 			default:
 				break;

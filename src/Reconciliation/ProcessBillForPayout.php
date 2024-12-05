@@ -10,7 +10,6 @@ use FernleafSystems\Integrations\Freeagent\Consumers\{
 	FreeagentConfigVoConsumer,
 	PayoutVoConsumer,
 };
-use FernleafSystems\Integrations\Freeagent\Reconciliation\Bills;
 
 class ProcessBillForPayout {
 

@@ -6,18 +6,18 @@ use FernleafSystems\ApiWrappers\Freeagent\Entities;
 use FernleafSystems\ApiWrappers\Freeagent\Entities\BankTransactions\BankTransactionVO;
 use FernleafSystems\ApiWrappers\Freeagent\Entities\Bills\BillVO;
 use FernleafSystems\Integrations\Freeagent;
+use FernleafSystems\Integrations\Freeagent\DataWrapper\{
+	AdjustmentVO,
+	ChargeVO,
+	PayoutVO,
+	RefundVO
+};
 use Stripe\{
 	BalanceTransaction,
 	Charge,
 	PaymentIntent,
 	Payout,
 	Refund
-};
-use FernleafSystems\Integrations\Freeagent\DataWrapper\{
-	AdjustmentVO,
-	ChargeVO,
-	PayoutVO,
-	RefundVO
 };
 
 abstract class StripeBridge extends Freeagent\Reconciliation\Bridge\StandardBridge {
