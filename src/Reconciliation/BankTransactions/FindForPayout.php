@@ -18,10 +18,10 @@ class FindForPayout extends DynPropertiesClass {
 	 */
 	public function find() :?Entities\BankTransactions\BankTransactionVO {
 		return ( new Entities\BankTransactions\Finder() )
+			->setConnection( $this->getConnection() )
 			->filterByDateRange( $this->getPayoutVO()->date_arrival, 1 )
 			->filterByBankAccount( $this->getBankAccountVo() )
 			->filterByUnexplained()
-			->setConnection( $this->getConnection() )
 			->byAmount( $this->getPayoutVO()->getTotalNet() );
 	}
 }
