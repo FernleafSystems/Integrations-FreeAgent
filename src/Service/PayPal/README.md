@@ -65,12 +65,22 @@ $api = PaypalRestApi::fromEnv(
 ### From a Provider Callback
 
 ```php
-$api = PaypalRestApi::fromProvider(function() {
-    // Load from your config system, database, etc.
+// Using a configuration object
+$api = PaypalRestApi::fromProvider(function() use ($configService) {
     return [
-        'client_id'     => $this->getConfigValue('paypal.client_id'),
-        'client_secret' => $this->getConfigValue('paypal.client_secret'),
-        'environment'   => $this->getConfigValue('paypal.environment'),
+        'client_id'     => $configService->get('paypal.client_id'),
+        'client_secret' => $configService->get('paypal.client_secret'),
+        'environment'   => $configService->get('paypal.environment'),
+    ];
+});
+
+// Or from a database
+$api = PaypalRestApi::fromProvider(function() use ($db) {
+    $row = $db->query("SELECT * FROM settings WHERE name = 'paypal'")->fetch();
+    return [
+        'client_id'     => $row['client_id'],
+        'client_secret' => $row['client_secret'],
+        'environment'   => $row['environment'] ?? 'sandbox',
     ];
 });
 ```
