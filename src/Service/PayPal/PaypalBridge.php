@@ -8,22 +8,33 @@ use FernleafSystems\Integrations\Freeagent\DataWrapper\{
 	RefundVO
 };
 use FernleafSystems\Integrations\Freeagent\Reconciliation\Bridge\StandardBridge;
-use FernleafSystems\Integrations\Freeagent\Service\PayPal;
 use PayPal\PayPalAPI\{
 	GetTransactionDetailsReq,
 	GetTransactionDetailsRequestType
 };
+use PaypalServerSdkLib\Models\Money;
+use PaypalServerSdkLib\Models\TransactionDetails;
 
 abstract class PaypalBridge extends StandardBridge {
 
-	use PayPal\Consumers\PaypalMerchantApiConsumer;
+	use Consumers\PaypalMerchantApiConsumer;
+	use Consumers\PaypalRestApiConsumer;
 
 	public const GATEWAY_SLUG = 'paypalexpress';
+
+	protected bool $useRestApi = false;
+
+	protected const TXN_SEARCH_DAYS_BACK = 90;
+
+	public function setUseRestApi( bool $use ): self {
+		$this->useRestApi = $use;
+		return $this;
+	}
 
 	/**
 	 * This needs to be extended to add the Invoice Item details.
 	 */
-	public function buildChargeFromTransaction( string $gatewayChargeID ) :ChargeVO {
+	public function buildChargeFromTransaction( string $gatewayChargeID ): ChargeVO {
 		$charge = new ChargeVO();
 
 		try {
@@ -38,7 +49,7 @@ abstract class PaypalBridge extends StandardBridge {
 			$charge->amount_fee = $txn->fee_value;
 			$charge->amount_net = $txn->net_value;
 		}
-		catch ( \Exception $e ) {
+		catch ( \Exception ) {
 		}
 
 		return $charge;
@@ -47,14 +58,14 @@ abstract class PaypalBridge extends StandardBridge {
 	/**
 	 * This isn't applicable to PayPal
 	 */
-	public function buildRefundFromId( string $gatewayRefundID ) :?RefundVO {
+	public function buildRefundFromId( string $gatewayRefundID ): ?RefundVO {
 		return null;
 	}
 
 	/**
 	 * With Paypal, the Transaction and the Payout are essentially the same thing.
 	 */
-	public function buildPayoutFromId( string $payoutID ) :PayoutVO {
+	public function buildPayoutFromId( string $payoutID ): PayoutVO {
 		$payout = new PayoutVO();
 		$payout->setId( $payoutID );
 
@@ -64,7 +75,7 @@ abstract class PaypalBridge extends StandardBridge {
 			$payout->currency = $txn->currency;
 			$payout->addCharge( $this->buildChargeFromTransaction( $payoutID ) );
 		}
-		catch ( \Exception $e ) {
+		catch ( \Exception ) {
 		}
 
 		return $payout;
@@ -73,14 +84,17 @@ abstract class PaypalBridge extends StandardBridge {
 	/**
 	 * @throws \Exception
 	 */
-	protected function getTxnChargeDetails( string $txnID ) :TransactionVO {
-		return $this->getTxnChargeDetailsLegacy( $txnID );
+	protected function getTxnChargeDetails( string $txnID ): TransactionVO {
+		return $this->useRestApi
+			? $this->getTxnChargeDetailsRest( $txnID )
+			: $this->getTxnChargeDetailsLegacy( $txnID );
 	}
 
 	/**
+	 * Legacy NVP/SOAP implementation
 	 * @throws \Exception
 	 */
-	protected function getTxnChargeDetailsLegacy( string $txnID ) :TransactionVO {
+	protected function getTxnChargeDetailsLegacy( string $txnID ): TransactionVO {
 		$reqType = new GetTransactionDetailsRequestType();
 		$reqType->TransactionID = $txnID;
 
@@ -111,5 +125,72 @@ abstract class PaypalBridge extends StandardBridge {
 		];
 
 		return $txn;
+	}
+
+	/**
+	 * New REST API implementation
+	 * @throws \Exception
+	 */
+	protected function getTxnChargeDetailsRest( string $txnID ): TransactionVO {
+		$controller = $this->getPaypalRestApi()->api()->getTransactionSearchController();
+
+		$endDate = ( new \DateTime( 'now', new \DateTimeZone( 'UTC' ) ) )->format( 'Y-m-d\TH:i:s\Z' );
+		$startDate = ( new \DateTime( '-' . static::TXN_SEARCH_DAYS_BACK . ' days', new \DateTimeZone( 'UTC' ) ) )->format( 'Y-m-d\TH:i:s\Z' );
+
+		$response = $controller->searchTransactions( [
+			'startDate'     => $startDate,
+			'endDate'       => $endDate,
+			'transactionId' => $txnID,
+			'fields'        => 'transaction_info',
+			'pageSize'      => 1,
+		] );
+
+		/** @var TransactionDetails[]|null $transactions */
+		$transactions = $response->getResult()->getTransactionDetails();
+		if ( empty( $transactions ) ) {
+			throw new \Exception( "Transaction $txnID not found" );
+		}
+
+		$txnInfo = $transactions[ 0 ]->getTransactionInfo();
+		if ( $txnInfo === null ) {
+			throw new \Exception( "Transaction info not available for $txnID" );
+		}
+		$txn = new TransactionVO();
+		$txn->id = $txnID;
+		$txn->status = $this->mapRestStatus( $txnInfo->getTransactionStatus() );
+		$txn->time = $txnInfo->getTransactionInitiationDate();
+
+		/** @var ?Money $amt */
+		$amt = $txnInfo->getTransactionAmount();
+		$fee = $txnInfo->getFeeAmount();
+		$grossValue = $amt?->getValue() ?? '0.00';
+		$feeValue = $fee?->getValue() ?? '0.00';
+
+		$txn->amount_with_breakdown = [
+			'gross_amount' => [
+				'currency_code' => $amt?->getCurrencyCode() ?? 'USD',
+				'value'         => $grossValue
+			],
+			'fee_amount'   => [
+				'currency_code' => $fee?->getCurrencyCode() ?? 'USD',
+				'value'         => $feeValue
+			],
+			'net_amount'   => [
+				'currency_code' => $amt?->getCurrencyCode() ?? 'USD',
+				'value'         => \bcsub( $grossValue, $feeValue, 2 )
+			],
+		];
+
+		return $txn;
+	}
+
+	protected function mapRestStatus( ?string $code ): string {
+		return match ( $code ) {
+			'S'     => 'Completed',
+			'P'     => 'Pending',
+			'D'     => 'Denied',
+			'V'     => 'Reversed',
+			default => $code ?? 'Unknown'
+		};
 	}
 }

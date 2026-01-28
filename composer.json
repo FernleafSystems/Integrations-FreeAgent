@@ -16,9 +16,9 @@
   "repositories": [
   ],
   "require":      {
-    "php":                                   ">=7.4",
+    "php":                                   ">=8.2",
     "fernleafsystems/apiwrappers-freeagent": "^1.0",
-    "paypal/merchant-sdk-php":               "~3.12",
+    "paypal/paypal-server-sdk":              "^2.1",
     "stripe/stripe-php":                     "^7",
     "ext-bcmath":                            "*"
   },
