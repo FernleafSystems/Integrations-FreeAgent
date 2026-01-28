@@ -27,6 +27,14 @@
   "autoload":     {
     "psr-4": {
       "FernleafSystems\\Integrations\\Freeagent\\": "src"
+    },
+    "psr-0": {
+      "PayPal\\Service": "src-paypal/merchant-sdk-php/lib/",
+      "PayPal\\CoreComponentTypes": "src-paypal/merchant-sdk-php/lib/",
+      "PayPal\\EBLBaseComponents": "src-paypal/merchant-sdk-php/lib/",
+      "PayPal\\EnhancedDataTypes": "src-paypal/merchant-sdk-php/lib/",
+      "PayPal\\PayPalAPI": "src-paypal/merchant-sdk-php/lib/",
+      "PayPal": "src-paypal/sdk-core-php/lib/"
     }
   }
 }
