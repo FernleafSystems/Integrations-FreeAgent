@@ -20,7 +20,7 @@ class ProcessInvoicesForPayout {
 	/**
 	 * @throws \Exception
 	 */
-	public function run() {
+	public function run() :void {
 		( new Invoices\ExplainBankTxnWithInvoices() )
 			->setConnection( $this->getConnection() )
 			->setPayoutVO( $this->getPayoutVO() )
