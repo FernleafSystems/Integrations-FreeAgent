@@ -3,7 +3,8 @@
 namespace FernleafSystems\Integrations\Freeagent\Reconciliation;
 
 use FernleafSystems\ApiWrappers\Base\ConnectionConsumer;
-use FernleafSystems\ApiWrappers\Freeagent\Entities;
+use FernleafSystems\ApiWrappers\Freeagent\Entities\Bills as BillEntity;
+use FernleafSystems\ApiWrappers\Freeagent\Entities\BankTransactions;
 use FernleafSystems\Integrations\Freeagent\Consumers\{
 	BankTransactionVoConsumer,
 	BridgeConsumer,
@@ -30,42 +31,39 @@ class ProcessBillForPayout {
 		$bill = $this->retrieveExistingBill();
 		if ( empty( $bill ) ) {
 			$bill = ( new Bills\CreateForPayout() )
+				->setFreeagentConfigVO( $this->getFreeagentConfigVO() )
 				->setConnection( $this->getConnection() )
 				->setPayoutVO( $payout )
-				->setFreeagentConfigVO( $this->getFreeagentConfigVO() )
 				->create();
 			$this->getBridge()->storeExternalBillId( $payout, $bill );
 		}
 
-		( new Bills\ExplainBankTxnWithStripeBill() )
-			->setConnection( $this->getConnection() )
-			->setPayoutVO( $payout )
+		( new Bills\ExplainBankTxnWithBill() )
 			->setBankTransactionVo( $this->getBankTransactionVo() )
 			->setFreeagentConfigVO( $this->getFreeagentConfigVO() )
+			->setConnection( $this->getConnection() )
+			->setPayoutVO( $payout )
 			->process( $bill );
 	}
 
-	protected function retrieveExistingBill() :?Entities\Bills\BillVO {
+	protected function retrieveExistingBill() :?BillEntity\BillVO {
 		$bill = null;
 		$extBillID = $this->getBridge()->getExternalBillId( $this->getPayoutVO() );
 		if ( !empty( $extBillID ) ) {
-			$bill = ( new Entities\Bills\Retrieve() )
-				->setConnection( $this->getConnection() )
+			$bill = ( new BillEntity\Retrieve() )
 				->setEntityId( $extBillID )
+				->setConnection( $this->getConnection() )
 				->retrieve();
 		}
 		return $bill;
 	}
 
-	/**
-	 * @return $this
-	 */
-	protected function refreshBankTxn() {
+	protected function refreshBankTxn() :static {
 		return $this->setBankTransactionVo(
-			( new Entities\BankTransactions\Retrieve() )
-				->setConnection( $this->getConnection() )
+			( new BankTransactions\Retrieve() )
 				->setEntityId( $this->getBankTransactionVo()->getId() )
-				->sendRequestWithVoResponse()
+				->setConnection( $this->getConnection() )
+				->retrieve()
 		);
 	}
 }

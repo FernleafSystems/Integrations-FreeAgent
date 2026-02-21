@@ -20,7 +20,7 @@ class ProcessPayout {
 	 * - reconcile stripe fees with freeagent bill
 	 * @throws \Exception
 	 */
-	public function process( string $payoutID ) {
+	public function process( string $payoutID ) :void {
 		$bridge = $this->getBridge();
 		$faConn = $this->getConnection();
 		$payout = $bridge->buildPayoutFromId( $payoutID );
@@ -32,8 +32,8 @@ class ProcessPayout {
 		}
 
 		$bankAccount = ( new Entities\BankAccounts\Retrieve() )
-			->setConnection( $faConn )
 			->setEntityId( $bankID )
+			->setConnection( $faConn )
 			->retrieve();
 		if ( empty( $bankAccount ) ) {
 			throw new \Exception( sprintf( 'Could not retrieve bank account with ID "%s".', $bankID ) );
@@ -43,8 +43,8 @@ class ProcessPayout {
 		$bankTxnID = $bridge->getExternalBankTxnId( $payout );
 		if ( !empty( $bankTxnID ) ) {
 			$txn = ( new Entities\BankTransactions\Retrieve() )
-				->setConnection( $faConn )
 				->setEntityId( $bankTxnID )
+				->setConnection( $faConn )
 				->retrieve();
 			if ( $txn instanceof Entities\BankTransactions\BankTransactionVO
 				 && $txn->amount != $payout->getTotalNet() ) {

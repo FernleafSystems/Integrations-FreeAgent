@@ -31,8 +31,8 @@ class ExplainBankTxnWithForeignBill {
 	 */
 	protected function createBillExplanation( Bills\BillVO $bill ) :BankTransactionExplanation\BankTransactionExplanationVO {
 		$exp = ( new BankTransactionExplanation\CreateManual() )
-			->setConnection( $this->getConnection() )
 			->setBankAccount( $this->getBankAccountVo() )
+			->setConnection( $this->getConnection() )
 			->setBillPaid( $bill )
 			->setValue( $bill->total_value )
 			->setDatedOn( $bill->dated_on )
