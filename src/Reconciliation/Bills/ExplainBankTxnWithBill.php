@@ -2,27 +2,26 @@
 
 namespace FernleafSystems\Integrations\Freeagent\Reconciliation\Bills;
 
-use FernleafSystems\ApiWrappers\Base\ConnectionConsumer;
-use FernleafSystems\ApiWrappers\Freeagent\Entities;
-use FernleafSystems\Integrations\Freeagent\Consumers;
+use FernleafSystems\ApiWrappers\Freeagent\Entities\BankAccounts;
+use FernleafSystems\ApiWrappers\Freeagent\Entities\Bills;
+use FernleafSystems\ApiWrappers\Freeagent\Entities\BankTransactionExplanation;
+use FernleafSystems\ApiWrappers\Freeagent\Entities\Company;
+use FernleafSystems\Integrations\Freeagent\Consumers\BankTransactionVoConsumer;
 
 /**
  * Retrieve the Stripe Bill within FreeAgent, and the associated Bank Transaction
  * for the Payout and creates a FreeAgent Explanation for it.
  */
-class ExplainBankTxnWithStripeBill {
+class ExplainBankTxnWithBill extends BillsBase {
 
-	use ConnectionConsumer;
-	use Consumers\BankTransactionVoConsumer;
-	use Consumers\FreeagentConfigVoConsumer;
-	use Consumers\PayoutVoConsumer;
+	use BankTransactionVoConsumer;
 
 	/**
 	 * Determine whether we're working in our native currency, or whether
 	 * we have to explain the bill using our Foreign Bill handling.
 	 * @throws \Exception
 	 */
-	public function process( Entities\Bills\BillVO $bill ) {
+	public function process( Bills\BillVO $bill ) :void {
 		if ( $bill->due_value > 0 ) {
 			$PO = $this->getPayoutVO();
 
@@ -40,9 +39,9 @@ class ExplainBankTxnWithStripeBill {
 
 				( new ExplainBankTxnWithForeignBill() )
 					->setPayoutVO( $this->getPayoutVO() )
-					->setConnection( $this->getConnection() )
 					->setBankTransactionVo( $this->getBankTransactionVo() )
 					->setBankAccountVo( $foreignCurrencyAccount )
+					->setConnection( $this->getConnection() )
 					->createExplanation( $bill );
 			}
 		}
@@ -51,13 +50,14 @@ class ExplainBankTxnWithStripeBill {
 	/**
 	 * @throws \Exception
 	 */
-	public function createSimpleExplanation( Entities\Bills\BillVO $bill ) {
+	public function createSimpleExplanation( Bills\BillVO $bill ) :void {
 
-		$explanation = ( new Entities\BankTransactionExplanation\Create() )
-			->setConnection( $this->getConnection() )
+		$explanation = ( new BankTransactionExplanation\Create() )
 			->setBankTxn( $this->getBankTransactionVo() )
 			->setBillPaid( $bill )
 			->setValue( $bill->total_value )
+			->setCategory( $this->getBillCategory()->url )
+			->setConnection( $this->getConnection() )
 			->create();
 
 		if ( empty( $explanation ) ) {
@@ -65,24 +65,21 @@ class ExplainBankTxnWithStripeBill {
 		}
 	}
 
-	/**
-	 * @return string
-	 */
-	protected function getBaseCurrency() {
-		return ( new Entities\Company\Retrieve() )
+	protected function getBaseCurrency() :string {
+		return (string)( new Company\Retrieve() )
 			->setConnection( $this->getConnection() )
 			->retrieve()
 			->currency;
 	}
 
-	protected function getForeignCurrencyBankAccount() :?Entities\BankAccounts\BankAccountVO {
+	protected function getForeignCurrencyBankAccount() :?BankAccounts\BankAccountVO {
 		$foreignBankAccount = null;
 
 		$bankAccountId = $this->getFreeagentConfigVO()->bank_account_id_foreign;
 		if ( !empty( $bankAccountId ) ) { // we retrieve it even though it may not be needed
-			$foreignBankAccount = ( new Entities\BankAccounts\Retrieve() )
-				->setConnection( $this->getConnection() )
+			$foreignBankAccount = ( new BankAccounts\Retrieve() )
 				->setEntityId( $bankAccountId )
+				->setConnection( $this->getConnection() )
 				->retrieve();
 		}
 		return $foreignBankAccount;
