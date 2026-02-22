@@ -19,10 +19,12 @@ class ExplainBankTxnWithForeignBill {
 	 * @throws \Exception
 	 */
 	public function createExplanation( Bills\BillVO $bill ) :bool {
-		$bankXferExplanation = $this->createAccountTransferExplanation( $bill );
-		$linkedTxn = $this->getNewLinkedBankTransferTransaction( $bankXferExplanation );
-		$updatedBill = $this->updateBillWithNewValue( $bill, $linkedTxn->amount );
-		$this->createBillExplanation( $updatedBill );
+		$linkedTxn = $this->getNewLinkedBankTransferTransaction(
+			$this->createAccountTransferExplanation( $bill )
+		);
+		$this->createBillExplanation(
+			$this->updateBillWithNewValue( $bill, $linkedTxn->amount )
+		);
 		return true;
 	}
 
@@ -49,8 +51,8 @@ class ExplainBankTxnWithForeignBill {
 	protected function createAccountTransferExplanation( Bills\BillVO $bill ) :BankTransactionExplanation\BankTransactionExplanationVO {
 
 		$exp = ( new BankTransactionExplanation\CreateTransferToAnotherAccount() )
-			->setConnection( $this->getConnection() )
 			->setBankTxn( $this->getBankTransactionVo() )
+			->setConnection( $this->getConnection() )
 			->setTargetBankAccount( $this->getBankAccountVo() )
 			->setValue( -1*$bill->total_value )// -1 as it's leaving the account
 			->create();
