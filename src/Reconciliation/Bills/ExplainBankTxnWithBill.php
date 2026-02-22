@@ -26,7 +26,7 @@ class ExplainBankTxnWithBill extends BillsBase {
 			$PO = $this->getPayoutVO();
 
 			$useForeignCurrencyBill = $this->getFreeagentConfigVO()->foreign_currency_bills
-									  || ( strcasecmp( $PO->currency, $this->getBaseCurrency() ) == 0 );
+									  || ( \strcasecmp( $PO->currency, $this->getBaseCurrency() ) == 0 );
 			if ( $useForeignCurrencyBill ) {
 				$this->createSimpleExplanation( $bill );
 			}
@@ -55,7 +55,7 @@ class ExplainBankTxnWithBill extends BillsBase {
 		$explanation = ( new BankTransactionExplanation\Create() )
 			->setBankTxn( $this->getBankTransactionVo() )
 			->setBillPaid( $bill )
-			->setValue( $bill->total_value )
+			->setValue( ( $bill->total_value > 0 ? -1 : 1 )*$bill->total_value )
 			->setCategory( $this->getBillCategory()->url )
 			->setConnection( $this->getConnection() )
 			->create();
